@@ -28,7 +28,7 @@ class AIService:
             for w in eligible[:50]
         ])
 
-        prompt = f"""You are a task-worker matching engine for GoodFlow, a gig marketplace on Celo.
+        prompt = f"""You are a task-worker matching engine for Veragig, a gig marketplace on Celo.
 
 Task ID: {task_id}
 Category: {task_category}
@@ -67,7 +67,7 @@ Respond with ONLY valid JSON, no explanation."""
         deliverable_summary: str,
         task_category: str,
     ) -> dict:
-        prompt = f"""You are an AI task reviewer for GoodFlow, a gig marketplace.
+        prompt = f"""You are an AI task reviewer for Veragig, a gig marketplace.
 
 Task ID: {task_id}
 Category: {task_category}
@@ -111,7 +111,7 @@ Evaluate whether the deliverable meets the task specification. Respond with ONLY
         signals: dict,
         loan_tier: str,
     ) -> dict:
-        prompt = f"""You are a financial coach for GoodFlow workers. Generate a helpful, encouraging credit narrative.
+        prompt = f"""You are a financial coach for Veragig workers. Generate a helpful, encouraging credit narrative.
 
 Worker: {worker_address}
 GoodScore: {good_score}/850

@@ -3,7 +3,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    goodflow_env: str = "production"
+    veragig_env: str = "production"
     celo_rpc_url: str = "https://forno.celo.org"
     backend_private_key: str = ""
     anthropic_api_key: str = ""

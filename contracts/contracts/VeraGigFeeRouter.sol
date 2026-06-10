@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GoodFlowFeeRouter is Ownable {
+contract VeraGigFeeRouter is Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable gDollar;
 
-    address public ubiPool;        // GoodCollective Worker Advancement Pool
-    address public treasury;       // GoodFlow treasury
+    address public ubiPool;        // VeraCollective Worker Advancement Pool
+    address public treasury;       // VeraGig treasury
 
     uint256 public constant UBI_POOL_PCT = 50;
     uint256 public constant TREASURY_PCT = 50;

@@ -3,14 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes import identity, tasks, score, loans, ai
 
 app = FastAPI(
-    title="GoodFlow API",
-    description="Backend for the GoodFlow gig marketplace on GoodDollar × Celo",
+    title="Veragig API",
+    description="Backend for the Veragig gig marketplace on GoodDollar × Celo",
     version="1.0.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://goodflow.app"],
+    allow_origins=["http://localhost:3000", "https://veragig.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,4 +25,4 @@ app.include_router(ai.router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "goodflow-api"}
+    return {"status": "ok", "service": "veragig-api"}

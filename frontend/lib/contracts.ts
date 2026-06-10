@@ -15,8 +15,8 @@ export const CONTRACTS = {
     "0x0000000000000000000000000000000000000000") as `0x${string}`,
 };
 
-export const GOODFLOW_ENV =
-  (process.env.NEXT_PUBLIC_GOODFLOW_ENV as "production" | "staging" | "development") ??
+export const VERAGIG_ENV =
+  (process.env.NEXT_PUBLIC_VERAGIG_ENV as "production" | "staging" | "development") ??
   "production";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";

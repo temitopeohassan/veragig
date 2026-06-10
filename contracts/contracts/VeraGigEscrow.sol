@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-interface IGoodScoreRegistry {
+interface IVeraScoreRegistry {
     function updateScore(
         address worker,
         uint16 newScore,
@@ -21,16 +21,16 @@ interface IGoodScoreRegistry {
     function getScore(address worker) external view returns (uint16);
 }
 
-interface IGoodFlowFeeRouter {
+interface IVeraGigFeeRouter {
     function routeFee(bytes32 taskId, uint256 settlementAmount, address payer) external;
 }
 
-contract GoodFlowEscrow is Ownable, ReentrancyGuard {
+contract VeraGigEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable gDollar;
-    IGoodScoreRegistry public scoreRegistry;
-    IGoodFlowFeeRouter public feeRouter;
+    IVeraScoreRegistry public scoreRegistry;
+    IVeraGigFeeRouter public feeRouter;
 
     uint256 public constant FEE_BPS = 200; // 2%
     uint256 public constant BPS_DENOM = 10000;
@@ -67,8 +67,8 @@ contract GoodFlowEscrow is Ownable, ReentrancyGuard {
         address _feeRouter
     ) Ownable(msg.sender) {
         gDollar = IERC20(_gDollar);
-        scoreRegistry = IGoodScoreRegistry(_scoreRegistry);
-        feeRouter = IGoodFlowFeeRouter(_feeRouter);
+        scoreRegistry = IVeraScoreRegistry(_scoreRegistry);
+        feeRouter = IVeraGigFeeRouter(_feeRouter);
     }
 
     function createTask(
@@ -191,7 +191,7 @@ contract GoodFlowEscrow is Ownable, ReentrancyGuard {
     }
 
     function updateContracts(address _scoreRegistry, address _feeRouter) external onlyOwner {
-        scoreRegistry = IGoodScoreRegistry(_scoreRegistry);
-        feeRouter = IGoodFlowFeeRouter(_feeRouter);
+        scoreRegistry = IVeraScoreRegistry(_scoreRegistry);
+        feeRouter = IVeraGigFeeRouter(_feeRouter);
     }
 }

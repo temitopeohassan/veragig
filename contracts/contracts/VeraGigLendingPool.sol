@@ -6,16 +6,16 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-interface IGoodScoreRegistry {
+interface IVeraScoreRegistry {
     function getScore(address worker) external view returns (uint16);
     function getLoanTier(address worker) external view returns (string memory);
 }
 
-contract GoodFlowLendingPool is Ownable, ReentrancyGuard {
+contract VeraGigLendingPool is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable gDollar;
-    IGoodScoreRegistry public scoreRegistry;
+    IVeraScoreRegistry public scoreRegistry;
 
     // Loan tier limits in G$ (18 decimals)
     uint256 public constant STARTER_MAX = 50 ether;   // 50 G$
@@ -50,7 +50,7 @@ contract GoodFlowLendingPool is Ownable, ReentrancyGuard {
 
     constructor(address _gDollar, address _scoreRegistry) Ownable(msg.sender) {
         gDollar = IERC20(_gDollar);
-        scoreRegistry = IGoodScoreRegistry(_scoreRegistry);
+        scoreRegistry = IVeraScoreRegistry(_scoreRegistry);
     }
 
     modifier onlyAuthorizedRepayer() {

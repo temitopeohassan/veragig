@@ -58,7 +58,7 @@ export function IdentityVerificationPrompt() {
         <div>
           <p className="text-sm font-medium text-orange-300">Identity verification required</p>
           <p className="text-xs text-gd-muted mt-1">
-            GoodFlow uses GoodDollar Face Verification to ensure one-human-one-account.
+            Veragig uses GoodDollar Face Verification to ensure one-human-one-account.
           </p>
           <button
             onClick={handleVerify}

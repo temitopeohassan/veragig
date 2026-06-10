@@ -3,14 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { ClaimSDK, useIdentitySDK } from "@goodsdks/citizen-sdk";
-import { GOODFLOW_ENV } from "@/lib/contracts";
+import { VERAGIG_ENV } from "@/lib/contracts";
 import { formatUnits } from "viem";
 
 function useClaimSDK() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
-  const identitySDK = useIdentitySDK(GOODFLOW_ENV);
+  const identitySDK = useIdentitySDK(VERAGIG_ENV);
 
   if (!address || !publicClient || !walletClient || !identitySDK) return null;
 
@@ -19,7 +19,7 @@ function useClaimSDK() {
     publicClient: publicClient as any,
     walletClient: walletClient as any,
     identitySDK,
-    env: GOODFLOW_ENV,
+    env: VERAGIG_ENV,
   });
 }
 

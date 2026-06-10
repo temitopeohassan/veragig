@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract GoodScoreRegistry is Ownable, ReentrancyGuard {
+contract VeraScoreRegistry is Ownable, ReentrancyGuard {
     struct WorkerScore {
         uint16 score;           // 0–850 composite score
         uint32 lastUpdatedBlock;

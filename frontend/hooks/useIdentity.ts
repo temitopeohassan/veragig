@@ -3,11 +3,11 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useIdentitySDK } from "@goodsdks/citizen-sdk";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
-import { GOODFLOW_ENV, CONTRACTS } from "@/lib/contracts";
+import { VERAGIG_ENV, CONTRACTS } from "@/lib/contracts";
 
 export function useIdentityStatus() {
   const { address } = useAccount();
-  const identitySDK = useIdentitySDK(GOODFLOW_ENV);
+  const identitySDK = useIdentitySDK(VERAGIG_ENV);
 
   return useQuery({
     queryKey: ["identity", address],
@@ -23,7 +23,7 @@ export function useIdentityStatus() {
 
 export function useIdentityExpiry() {
   const { address } = useAccount();
-  const identitySDK = useIdentitySDK(GOODFLOW_ENV);
+  const identitySDK = useIdentitySDK(VERAGIG_ENV);
 
   return useQuery({
     queryKey: ["identity-expiry", address],
@@ -41,7 +41,7 @@ export function useIdentityExpiry() {
 }
 
 export function useGenerateFVLink() {
-  const identitySDK = useIdentitySDK(GOODFLOW_ENV);
+  const identitySDK = useIdentitySDK(VERAGIG_ENV);
 
   return useMutation({
     mutationFn: async (callbackUrl: string) => {

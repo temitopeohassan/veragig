@@ -43,7 +43,7 @@ function VerifyCallbackContent() {
         <>
           <CheckCircle2 className="h-16 w-16 text-gd-green" />
           <h2 className="text-xl font-bold">Identity verified!</h2>
-          <p className="text-gd-muted">You are now a verified human on GoodFlow. Redirecting…</p>
+          <p className="text-gd-muted">You are now a verified human on Veragig. Redirecting…</p>
         </>
       )}
       {status === "error" && (
