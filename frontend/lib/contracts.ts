@@ -1,0 +1,22 @@
+export const CONTRACTS = {
+  G_DOLLAR: (process.env.NEXT_PUBLIC_G_DOLLAR_ADDRESS ??
+    "0x62B8B11039fcfE5AB0C56E502b1C372A3D2a9C7A") as `0x${string}`,
+  CFA_FORWARDER: (process.env.NEXT_PUBLIC_CFA_FORWARDER ??
+    "0xcfA132E353cB4E398080B9700609bb008eceB125") as `0x${string}`,
+  IDENTITY: (process.env.NEXT_PUBLIC_IDENTITY_CONTRACT ??
+    "0xC361A6E67822a0EDc17D899227dd9FC50BD62F42") as `0x${string}`,
+  ESCROW: (process.env.NEXT_PUBLIC_ESCROW_CONTRACT ??
+    "0x0000000000000000000000000000000000000000") as `0x${string}`,
+  SCORE_REGISTRY: (process.env.NEXT_PUBLIC_SCORE_REGISTRY ??
+    "0x0000000000000000000000000000000000000000") as `0x${string}`,
+  LENDING_POOL: (process.env.NEXT_PUBLIC_LENDING_POOL ??
+    "0x0000000000000000000000000000000000000000") as `0x${string}`,
+  FEE_ROUTER: (process.env.NEXT_PUBLIC_FEE_ROUTER ??
+    "0x0000000000000000000000000000000000000000") as `0x${string}`,
+};
+
+export const GOODFLOW_ENV =
+  (process.env.NEXT_PUBLIC_GOODFLOW_ENV as "production" | "staging" | "development") ??
+  "production";
+
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
