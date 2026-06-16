@@ -1,5 +1,5 @@
 from web3 import Web3
-from web3.middleware import ExtraDataToPOAMiddleware
+from web3.middleware import geth_poa_middleware
 from eth_account import Account
 from app.config import get_settings
 from app.services.score_service import get_score_service
@@ -68,7 +68,7 @@ LENDING_POOL_ABI = [
 class LoanService:
     def __init__(self):
         self.w3 = Web3(Web3.HTTPProvider(settings.celo_rpc_url))
-        self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+        self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self.contract = self.w3.eth.contract(
             address=Web3.to_checksum_address(settings.lending_pool),
             abi=LENDING_POOL_ABI,
@@ -76,7 +76,7 @@ class LoanService:
         self.account = Account.from_key(settings.backend_private_key) if settings.backend_private_key else None
 
     def check_eligibility(self, worker_address: str) -> dict:
-        addr = Web3.to_checksum_address(worker_address)
+        addr = Web3.toChecksumAddress(worker_address)
         is_eligible, max_loan_wei, repayment_pct, tier, reason = self.contract.functions.checkEligibility(addr).call()
 
         score_data = get_score_service().get_score(worker_address)
@@ -95,17 +95,17 @@ class LoanService:
             return {"error": "No backend signer configured"}
 
         loan_id_bytes = bytes.fromhex(loan_id.lstrip("0x"))
-        nonce = self.w3.eth.get_transaction_count(self.account.address)
+        nonce = self.w3.eth.getTransactionCount(self.account.address)
         tx = self.contract.functions.processRepayment(
             loan_id_bytes, payout_wei
         ).build_transaction({
             "from": self.account.address,
             "nonce": nonce,
             "gas": 150000,
-            "gasPrice": self.w3.eth.gas_price,
+            "gasPrice": self.w3.eth.gasPrice,
         })
         signed = self.account.sign_transaction(tx)
-        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction).hex()
+        tx_hash = self.w3.eth.sendRawTransaction(signed.rawTransaction).hex()
 
         deduction = (payout_wei * repayment_pct) // 100
         return {

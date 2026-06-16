@@ -1,5 +1,5 @@
 import { createConfig, http } from "wagmi";
-import { celo } from "wagmi/chains";
+import { celo, celoSepolia } from "wagmi/chains";
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
   metaMaskWallet,
@@ -15,15 +15,16 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: "Veragig",
+    appName: "VeraGig",
     projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? "",
   }
 );
 
 export const wagmiConfig = createConfig({
-  chains: [celo],
+  chains: [celoSepolia, celo],
   connectors,
   transports: {
+    [celoSepolia.id]: http("https://forno.celo-sepolia.celo-testnet.org"),
     [celo.id]: http("https://forno.celo.org"),
   },
 });

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits, keccak256, encodePacked, toHex } from "viem";
 import { API_URL, CONTRACTS } from "@/lib/contracts";
-import GoodFlowEscrowABI from "@/abis/GoodFlowEscrow.json";
+import VeraGigEscrowABI from "@/abis/VeraGigEscrow.json";
 import ERC20ABI from "@/abis/ERC20.json";
 
 export function useTasks(status = "open", category?: string) {
@@ -70,7 +70,7 @@ export function useCreateTask() {
       // Create task on-chain
       const txHash = await writeContractAsync({
         address: CONTRACTS.ESCROW,
-        abi: GoodFlowEscrowABI,
+        abi: VeraGigEscrowABI,
         functionName: "createTask",
         args: [taskId, rewardWei, BigInt(params.deadlineUnix), params.releaseAsStream, BigInt(params.payoutDurationDays)],
       });

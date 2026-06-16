@@ -1,0 +1,83 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IVeraScoreRegistry",
+  "sourceName": "contracts/VeraGigEscrow.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "worker",
+          "type": "address"
+        }
+      ],
+      "name": "getScore",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "worker",
+          "type": "address"
+        },
+        {
+          "internalType": "uint16",
+          "name": "newScore",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint32",
+          "name": "tasksCompleted",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "tasksAccepted",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "disputesLost",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "loansRepaidOnTime",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "ubiClaimStreakDays",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "earningConsistencyWeeks",
+          "type": "uint32"
+        },
+        {
+          "internalType": "string",
+          "name": "trigger",
+          "type": "string"
+        }
+      ],
+      "name": "updateScore",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

@@ -1,42 +1,67 @@
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
+import * as dotenv from "dotenv";
+dotenv.config();
+
+// G$ token addresses per network
+const G_DOLLAR_ADDRESSES: Record<string, string> = {
+  celo: "0x62B8B11039fcfE5AB0C56E502b1C372A3D2a9C7A",       // Celo Mainnet
+  "celo-sepolia": "0x0000000000000000000000000000000000000000", // placeholder — set G_DOLLAR_ADDRESS in .env
+};
 
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with:", deployer.address);
+  console.log("Network:", network.name);
 
-  const G_DOLLAR = "0x62B8B11039fcfE5AB0C56E502b1C372A3D2a9C7A"; // Celo Mainnet
+  let G_DOLLAR =
+    process.env.G_DOLLAR_ADDRESS || G_DOLLAR_ADDRESSES[network.name] || "";
+
+  if (!G_DOLLAR || G_DOLLAR === "0x0000000000000000000000000000000000000000") {
+    if (network.name === "celo") {
+      throw new Error("G_DOLLAR_ADDRESS is not set for mainnet. Add it to .env");
+    }
+    // Testnet: deploy a mintable mock G$ token
+    console.log("No G$ address configured — deploying ERC20Mock as test G$...");
+    const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
+    const mockToken = await ERC20Mock.deploy("GoodDollar (Test)", "G$");
+    await mockToken.waitForDeployment();
+    G_DOLLAR = await mockToken.getAddress();
+    console.log("ERC20Mock (test G$):", G_DOLLAR);
+  }
+
+  console.log("G$ token:", G_DOLLAR);
   const TREASURY = deployer.address; // Update before mainnet deploy
 
-  // 1. GoodScoreRegistry
-  const GoodScoreRegistry = await ethers.getContractFactory("GoodScoreRegistry");
-  const scoreRegistry = await GoodScoreRegistry.deploy();
+  // 1. VeraScoreRegistry
+  const VeraScoreRegistry = await ethers.getContractFactory("VeraScoreRegistry");
+  const scoreRegistry = await VeraScoreRegistry.deploy();
   await scoreRegistry.waitForDeployment();
-  console.log("GoodScoreRegistry:", await scoreRegistry.getAddress());
+  console.log("VeraScoreRegistry:", await scoreRegistry.getAddress());
 
-  // 2. GoodFlowFeeRouter (UBI pool = deployer for now, update post-deploy)
-  const GoodFlowFeeRouter = await ethers.getContractFactory("GoodFlowFeeRouter");
-  const feeRouter = await GoodFlowFeeRouter.deploy(G_DOLLAR, TREASURY, TREASURY);
+  // 2. VeraGigFeeRouter (UBI pool = deployer for now, update post-deploy)
+  const VeraGigFeeRouter = await ethers.getContractFactory("VeraGigFeeRouter");
+  const feeRouter = await VeraGigFeeRouter.deploy(G_DOLLAR, TREASURY, TREASURY);
   await feeRouter.waitForDeployment();
-  console.log("GoodFlowFeeRouter:", await feeRouter.getAddress());
+  console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
 
-  // 3. GoodFlowEscrow
-  const GoodFlowEscrow = await ethers.getContractFactory("GoodFlowEscrow");
-  const escrow = await GoodFlowEscrow.deploy(
+  // 3. VeraGigEscrow
+  const VeraGigEscrow = await ethers.getContractFactory("VeraGigEscrow");
+  const escrow = await VeraGigEscrow.deploy(
     G_DOLLAR,
     await scoreRegistry.getAddress(),
     await feeRouter.getAddress()
   );
   await escrow.waitForDeployment();
-  console.log("GoodFlowEscrow:", await escrow.getAddress());
+  console.log("VeraGigEscrow:", await escrow.getAddress());
 
-  // 4. GoodFlowLendingPool
-  const GoodFlowLendingPool = await ethers.getContractFactory("GoodFlowLendingPool");
-  const lendingPool = await GoodFlowLendingPool.deploy(
+  // 4. VeraGigLendingPool
+  const VeraGigLendingPool = await ethers.getContractFactory("VeraGigLendingPool");
+  const lendingPool = await VeraGigLendingPool.deploy(
     G_DOLLAR,
     await scoreRegistry.getAddress()
   );
   await lendingPool.waitForDeployment();
-  console.log("GoodFlowLendingPool:", await lendingPool.getAddress());
+  console.log("VeraGigLendingPool:", await lendingPool.getAddress());
 
   // Authorize escrow to call fee router
   await feeRouter.setAuthorizedCaller(await escrow.getAddress(), true);
@@ -45,10 +70,10 @@ async function main() {
   await scoreRegistry.setAuthorizedUpdater(await escrow.getAddress(), true);
 
   console.log("\n--- Deployment Summary ---");
-  console.log("GoodScoreRegistry:", await scoreRegistry.getAddress());
-  console.log("GoodFlowFeeRouter:", await feeRouter.getAddress());
-  console.log("GoodFlowEscrow:", await escrow.getAddress());
-  console.log("GoodFlowLendingPool:", await lendingPool.getAddress());
+  console.log("VeraScoreRegistry:", await scoreRegistry.getAddress());
+  console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
+  console.log("VeraGigEscrow:", await escrow.getAddress());
+  console.log("VeraGigLendingPool:", await lendingPool.getAddress());
   console.log("\nUpdate .env.local in frontend with these addresses!");
 }
 

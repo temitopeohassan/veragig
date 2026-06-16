@@ -133,7 +133,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         uint256 fee = (task.rewardWei * FEE_BPS) / BPS_DENOM;
 
         // Route platform fee
-        gDollar.safeApprove(address(feeRouter), fee);
+        gDollar.forceApprove(address(feeRouter), fee);
         feeRouter.routeFee(taskId, task.rewardWei, task.client);
 
         // Release reward to worker (lump sum — streaming handled off-chain via Superfluid)
@@ -179,7 +179,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         task.status = TaskStatus.Completed;
         uint256 fee = (task.rewardWei * FEE_BPS) / BPS_DENOM;
 
-        gDollar.safeApprove(address(feeRouter), fee);
+        gDollar.forceApprove(address(feeRouter), fee);
         feeRouter.routeFee(taskId, task.rewardWei, task.client);
         gDollar.safeTransfer(winner, task.rewardWei);
 

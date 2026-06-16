@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { IdentityBadge } from "./IdentityVerification";
 import { useAccount } from "wagmi";
@@ -13,8 +14,10 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-gd-green">Good</span>
-            <span className="text-xl font-bold text-gd-text">Flow</span>
+            <Image src="/logo.png" alt="VeraGig" width={32} height={32} className="h-8 w-8" priority />
+            <span className="text-xl font-bold text-gd-text">
+              Vera<span className="text-gd-green">Gig</span>
+            </span>
           </Link>
 
           {isConnected && (

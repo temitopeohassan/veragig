@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { GoodFlowEscrow, GoodScoreRegistry, GoodFlowFeeRouter } from "../typechain-types";
+import { VeraGigEscrow, VeraScoreRegistry, VeraGigFeeRouter } from "../typechain-types";
 
-describe("GoodFlowEscrow", () => {
-  let escrow: GoodFlowEscrow;
-  let scoreRegistry: GoodScoreRegistry;
-  let feeRouter: GoodFlowFeeRouter;
+describe("VeraGigEscrow", () => {
+  let escrow: VeraGigEscrow;
+  let scoreRegistry: VeraScoreRegistry;
+  let feeRouter: VeraGigFeeRouter;
   let mockToken: any;
   let client: any;
   let worker: any;
@@ -18,18 +18,18 @@ describe("GoodFlowEscrow", () => {
     const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
     mockToken = await ERC20Mock.deploy("GoodDollar", "G$");
 
-    const GoodScoreRegistry = await ethers.getContractFactory("GoodScoreRegistry");
-    scoreRegistry = await GoodScoreRegistry.deploy();
+    const VeraScoreRegistry = await ethers.getContractFactory("VeraScoreRegistry");
+    scoreRegistry = await VeraScoreRegistry.deploy();
 
-    const GoodFlowFeeRouter = await ethers.getContractFactory("GoodFlowFeeRouter");
-    feeRouter = await GoodFlowFeeRouter.deploy(
+    const VeraGigFeeRouter = await ethers.getContractFactory("VeraGigFeeRouter");
+    feeRouter = await VeraGigFeeRouter.deploy(
       await mockToken.getAddress(),
       owner.address,
       owner.address
     );
 
-    const GoodFlowEscrow = await ethers.getContractFactory("GoodFlowEscrow");
-    escrow = await GoodFlowEscrow.deploy(
+    const VeraGigEscrow = await ethers.getContractFactory("VeraGigEscrow");
+    escrow = await VeraGigEscrow.deploy(
       await mockToken.getAddress(),
       await scoreRegistry.getAddress(),
       await feeRouter.getAddress()

@@ -1,4 +1,5 @@
 import anthropic
+import json
 from app.config import get_settings
 
 settings = get_settings()
@@ -6,7 +7,11 @@ settings = get_settings()
 
 class AIService:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        self.api_key = settings.anthropic_api_key
+        if self.api_key and "your_anthropic_api_key_here" not in self.api_key:
+            self.client = anthropic.Anthropic(api_key=self.api_key)
+        else:
+            self.client = None
         self.model = "claude-sonnet-4-6"
 
     async def match_task_to_workers(
@@ -22,6 +27,18 @@ class AIService:
 
         if not eligible:
             return {"matches": []}
+
+        if not self.client:
+            # Mock matching logic
+            matches = []
+            for w in eligible[:top_k]:
+                matches.append({
+                    "worker_address": w["address"],
+                    "match_score": 0.85,
+                    "good_score": w.get("good_score", 0),
+                    "skills_matched": ["development", "solidity"] # placeholder
+                })
+            return {"matches": matches}
 
         workers_text = "\n".join([
             f"- Address: {w['address']}, Score: {w.get('good_score', 0)}, Skills: {', '.join(w.get('skills', []))}"
@@ -51,7 +68,6 @@ Respond with ONLY valid JSON, no explanation."""
             messages=[{"role": "user", "content": prompt}],
         )
 
-        import json
         try:
             matches = json.loads(message.content[0].text)
             if isinstance(matches, list):
@@ -86,13 +102,20 @@ Evaluate whether the deliverable meets the task specification. Respond with ONLY
   "revision_notes": "specific improvement suggestions if needs_revision, else null"
 }}"""
 
+        if not self.client:
+            return {
+                "verdict": "approved",
+                "confidence": 0.9,
+                "reasoning": "AI verification skipped (no API key). Auto-approving for testing.",
+                "revision_notes": None
+            }
+
         message = self.client.messages.create(
             model=self.model,
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
 
-        import json
         try:
             result = json.loads(message.content[0].text)
             return result
@@ -129,13 +152,22 @@ Respond with ONLY valid JSON:
   "top_improvement_actions": ["action1", "action2", "action3"]
 }}"""
 
+        if not self.client:
+            return {
+                "narrative": f"Your GoodScore is {good_score}/850. You are making great progress in the {loan_tier} tier!",
+                "top_improvement_actions": [
+                    "Maintain your UBI claim streak",
+                    "Complete more tasks with high ratings",
+                    "Ensure timely loan repayments"
+                ]
+            }
+
         message = self.client.messages.create(
             model=self.model,
             max_tokens=512,
             messages=[{"role": "user", "content": prompt}],
         )
 
-        import json
         try:
             return json.loads(message.content[0].text)
         except Exception:

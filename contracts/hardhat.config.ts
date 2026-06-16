@@ -6,6 +6,7 @@ dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x" + "0".repeat(64);
 const CELO_RPC_URL = process.env.CELO_RPC_URL || "https://forno.celo.org";
+const CELO_SEPOLIA_RPC_URL = process.env.CELO_SEPOLIA_RPC_URL || "https://forno.celo-sepolia.celo-testnet.org/";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -20,10 +21,10 @@ const config: HardhatUserConfig = {
       accounts: [PRIVATE_KEY],
       chainId: 42220,
     },
-    alfajores: {
-      url: "https://alfajores-forno.celo-testnet.org",
+    "celo-sepolia": {
+      url: CELO_SEPOLIA_RPC_URL,
       accounts: [PRIVATE_KEY],
-      chainId: 44787,
+      chainId: 11142220, // Celo Sepolia testnet (replaced deprecated Alfajores)
     },
     localhost: {
       url: "http://127.0.0.1:8545",
@@ -32,6 +33,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       celo: process.env.CELOSCAN_API_KEY || "",
+      "celo-sepolia": process.env.CELOSCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -40,6 +42,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.celoscan.io/api",
           browserURL: "https://celoscan.io",
+        },
+      },
+      {
+        network: "celo-sepolia",
+        chainId: 11142220,
+        urls: {
+          apiURL: "https://celo-sepolia.blockscout.com/api",
+          browserURL: "https://celo-sepolia.blockscout.com",
         },
       },
     ],

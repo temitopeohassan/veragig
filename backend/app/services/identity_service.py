@@ -35,12 +35,12 @@ class IdentityService:
     def __init__(self):
         self.w3 = Web3(Web3.HTTPProvider(settings.celo_rpc_url))
         self.contract = self.w3.eth.contract(
-            address=Web3.to_checksum_address(settings.identity_contract),
+            address=Web3.toChecksumAddress(settings.identity_contract),
             abi=IDENTITY_ABI,
         )
 
     async def get_whitelisted_root(self, account: str) -> dict:
-        checksum_addr = Web3.to_checksum_address(account)
+        checksum_addr = Web3.toChecksumAddress(account)
         root, is_whitelisted = self.contract.functions.getWhitelistedRoot(checksum_addr).call()
         last_auth = self.contract.functions.lastAuthenticated(checksum_addr).call()
         return {
@@ -50,7 +50,7 @@ class IdentityService:
         }
 
     async def get_expiry_data(self, account: str) -> dict:
-        checksum_addr = Web3.to_checksum_address(account)
+        checksum_addr = Web3.toChecksumAddress(account)
         last_auth = self.contract.functions.lastAuthenticated(checksum_addr).call()
         auth_period = self.contract.functions.authenticationPeriod().call()
         expires_at = last_auth + (auth_period * 86400)

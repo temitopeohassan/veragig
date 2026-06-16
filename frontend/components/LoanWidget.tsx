@@ -50,7 +50,7 @@ export function LoanWidget() {
             <p className="font-medium">Not eligible</p>
             <p className="text-xs text-gd-muted mt-0.5">
               {eligibility?.reason_if_ineligible === "INSUFFICIENT_GOOD_SCORE"
-                ? "Build your GoodScore to at least 300 to unlock the Starter tier."
+                ? "Build your VeraScore to at least 300 to unlock the Starter tier."
                 : eligibility?.reason_if_ineligible}
             </p>
           </div>

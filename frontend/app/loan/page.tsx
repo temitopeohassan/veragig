@@ -26,9 +26,9 @@ export default function LoanPage() {
       <div className="rounded-xl border border-gd-blue/30 bg-gd-blue/10 p-4 flex gap-3">
         <Info className="h-5 w-5 text-gd-blue shrink-0 mt-0.5" />
         <div className="text-sm text-gd-text space-y-1">
-          <p className="font-medium">How Veragig loans work</p>
+          <p className="font-medium">How VeraGig loans work</p>
           <p className="text-gd-muted">
-            Your GoodScore determines your loan tier and maximum amount. Repayment is automatically
+            Your VeraScore determines your loan tier and maximum amount. Repayment is automatically
             deducted from future task payouts — no manual payments needed.
           </p>
         </div>

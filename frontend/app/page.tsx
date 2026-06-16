@@ -52,7 +52,7 @@ export default function LandingPage() {
           },
           {
             icon: TrendingUp,
-            title: "GoodScore",
+            title: "VeraScore",
             desc: "Build an on-chain credit score from task history, UBI claims, and loan repayments.",
           },
           {

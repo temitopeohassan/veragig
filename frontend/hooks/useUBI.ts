@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
-import { ClaimSDK, useIdentitySDK } from "@goodsdks/citizen-sdk";
+import { ClaimSDK } from "@goodsdks/citizen-sdk";
+import { useIdentitySDK } from "@/hooks/useIdentity";
 import { VERAGIG_ENV } from "@/lib/contracts";
 import { formatUnits } from "viem";
 
@@ -10,7 +11,7 @@ function useClaimSDK() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
-  const identitySDK = useIdentitySDK(VERAGIG_ENV);
+  const identitySDK = useIdentitySDK();
 
   if (!address || !publicClient || !walletClient || !identitySDK) return null;
 
@@ -32,11 +33,12 @@ export function useUBIEntitlement() {
     enabled: !!address && !!claimSDK,
     queryFn: async () => {
       if (!claimSDK) return null;
-      const entitlement = await claimSDK.checkEntitlement();
+      // v1.2.5 checkEntitlement returns a ClaimEntitlementResult, not a raw bigint.
+      const { amount } = await claimSDK.checkEntitlement();
       return {
-        entitlementWei: entitlement.toString(),
-        entitlementGDollar: Number(formatUnits(entitlement, 18)).toFixed(2),
-        canClaim: entitlement > 0n,
+        entitlementWei: amount.toString(),
+        entitlementGDollar: Number(formatUnits(amount, 18)).toFixed(2),
+        canClaim: amount > 0n,
       };
     },
     refetchInterval: 30_000,

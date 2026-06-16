@@ -26,7 +26,7 @@ export function GoodScoreWidget() {
   return (
     <div className="rounded-xl border border-gd-border bg-gd-card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gd-muted">GoodScore</h3>
+        <h3 className="text-sm font-medium text-gd-muted">VeraScore</h3>
         <TrendingUp className="h-4 w-4 text-gd-muted" />
       </div>
 
