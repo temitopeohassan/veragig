@@ -1,0 +1,143 @@
+const express = require('express');
+const { v4: uuidv4 } = require('uuid');
+const { Task, TaskApplication } = require('../models/task');
+const { getIdentityService } = require('../services/identity_service');
+const { getScoreService } = require('../services/score_service');
+const { sequelize } = require('../database');
+
+const router = express.Router();
+
+router.post('/', async (req, res) => {
+  try {
+    const { 
+      task_id, title, description, category, reward_wei, 
+      deadline_unix, client_address, release_as_stream, 
+      payout_duration_days, milestones, escrow_tx_hash 
+    } = req.body;
+
+    const identitySvc = getIdentityService();
+    const identity = await identitySvc.getWhitelistedRoot(client_address);
+    if (!identity.is_whitelisted) {
+      return res.status(403).json({ detail: 'IDENTITY_NOT_VERIFIED' });
+    }
+
+    const task = await Task.create({
+      id: task_id,
+      title,
+      description,
+      category,
+      reward_wei: BigInt(reward_wei),
+      deadline_unix: BigInt(deadline_unix),
+      client_address: client_address.toLowerCase(),
+      status: 'open',
+      release_as_stream: release_as_stream !== undefined ? release_as_stream : true,
+      payout_duration_days: payout_duration_days || 7,
+      milestones: milestones ? JSON.stringify(milestones) : null,
+      escrow_tx_hash,
+    });
+
+    res.json({ task_id, status: 'open' });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/', async (req, res) => {
+  try {
+    const { status = 'open', category } = req.query;
+    const where = {};
+    if (status) where.status = status;
+    if (category) where.category = category;
+
+    const tasks = await Task.findAll({ where });
+    res.json(tasks.map(t => ({
+      task_id: t.id,
+      title: t.title,
+      category: t.category,
+      reward_wei: t.reward_wei.toString(),
+      deadline_unix: Number(t.deadline_unix),
+      client_address: t.client_address,
+      status: t.status,
+    })));
+  } catch (error) {
+    console.error('Error listing tasks:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/:task_id', async (req, res) => {
+  try {
+    const task = await Task.findByPk(req.params.task_id);
+    if (!task) {
+      return res.status(404).json({ detail: 'Task not found' });
+    }
+    res.json(task);
+  } catch (error) {
+    console.error('Error getting task:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.post('/apply', async (req, res) => {
+  try {
+    const { task_id, worker_address, proposal, estimated_days } = req.body;
+
+    const identitySvc = getIdentityService();
+    const identity = await identitySvc.getWhitelistedRoot(worker_address);
+    if (!identity.is_whitelisted) {
+      return res.status(403).json({ detail: 'IDENTITY_NOT_VERIFIED' });
+    }
+
+    const scoreSvc = getScoreService();
+    const scoreData = await scoreSvc.getScore(worker_address);
+    const appId = '0x' + uuidv4().replace(/-/g, '');
+
+    await TaskApplication.create({
+      id: appId,
+      task_id,
+      worker_address: worker_address.toLowerCase(),
+      proposal,
+      estimated_days,
+      good_score_at_application: scoreData.good_score,
+    });
+
+    res.json({ application_id: appId, good_score_at_application: scoreData.good_score });
+  } catch (error) {
+    console.error('Error applying to task:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.post('/submit', async (req, res) => {
+  try {
+    const { task_id, worker_address, deliverable_cid, notes, milestone_index } = req.body;
+
+    const task = await Task.findByPk(task_id);
+    if (!task) {
+      return res.status(404).json({ detail: 'Task not found' });
+    }
+    if (task.worker_address && task.worker_address.toLowerCase() !== worker_address.toLowerCase()) {
+      return res.status(403).json({ detail: 'Not the assigned worker' });
+    }
+    if (task.status !== 'assigned') {
+      return res.status(400).json({ detail: 'TASK_NOT_ASSIGNED' });
+    }
+
+    task.deliverable_cid = deliverable_cid;
+    task.status = 'submitted';
+    await task.save();
+
+    const submissionId = '0x' + uuidv4().replace(/-/g, '');
+    res.json({
+      submission_id: submissionId,
+      on_chain_tx: null,
+      ai_review_triggered: true,
+    });
+  } catch (error) {
+    console.error('Error submitting deliverable:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+module.exports = router;
