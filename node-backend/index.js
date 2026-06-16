@@ -28,17 +28,20 @@ app.get('/', (req, res) => {
   res.send('Veragig Node.js API is running');
 });
 
-// For Vercel, we export the app instead of calling app.listen
-// but for local development, we still want app.listen
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// For Vercel/Production
+if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+  connectDB().catch(err => {
+    console.error('Failed to connect to Firestore on startup:', err.message);
+  });
+} else {
+  // Local development
   connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
+  }).catch(err => {
+    console.error('Failed to start server due to Firestore error:', err.message);
   });
-} else {
-    // In production (Vercel), we just connect to DB
-    connectDB();
 }
 
 module.exports = app;

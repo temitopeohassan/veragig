@@ -1,46 +1,39 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../database');
+const { getFirestore } = require('../database');
 
-const Loan = sequelize.define('Loan', {
-  id: {
-    type: DataTypes.STRING(66),
-    primaryKey: true,
+const COLLECTION = 'loans';
+
+const Loan = {
+  async create(data) {
+    const db = getFirestore();
+    await db.collection(COLLECTION).doc(data.id).set({
+      ...data,
+      created_at: new Date(),
+    });
+    return data;
   },
-  worker_address: {
-    type: DataTypes.STRING(42),
-    allowNull: false,
+
+  async findByPk(id) {
+    const db = getFirestore();
+    const doc = await db.collection(COLLECTION).doc(id).get();
+    if (!doc.exists) return null;
+    return { ...doc.data(), id: doc.id, save: async function() {
+      await db.collection(COLLECTION).doc(this.id).update(this);
+    }};
   },
-  principal_wei: {
-    type: DataTypes.BIGINT,
-    allowNull: false,
-  },
-  remaining_wei: {
-    type: DataTypes.BIGINT,
-    allowNull: false,
-  },
-  repayment_deduction_pct: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  purpose: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
-  },
-  stream_tx: {
-    type: DataTypes.STRING(66),
-    allowNull: true,
-  },
-  fully_repaid: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  repaid_at: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-}, {
-  timestamps: true,
-  tableName: 'loans',
-});
+
+  async findAll({ where } = {}) {
+    const db = getFirestore();
+    let query = db.collection(COLLECTION);
+
+    if (where) {
+      Object.entries(where).forEach(([key, value]) => {
+        query = query.where(key, '==', value);
+      });
+    }
+
+    const snapshot = await query.get();
+    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+  }
+};
 
 module.exports = { Loan };

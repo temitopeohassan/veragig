@@ -75,13 +75,17 @@ class ScoreService {
       transport: http(config.celoRpcUrl),
     });
 
-    if (config.backendPrivateKey) {
-      this.account = privateKeyToAccount(config.backendPrivateKey);
-      this.walletClient = createWalletClient({
-        account: this.account,
-        chain: celo,
-        transport: http(config.celoRpcUrl),
-      });
+    if (config.backendPrivateKey && config.backendPrivateKey.startsWith('0x') && config.backendPrivateKey.length === 66) {
+      try {
+        this.account = privateKeyToAccount(config.backendPrivateKey);
+        this.walletClient = createWalletClient({
+          account: this.account,
+          chain: celo,
+          transport: http(config.celoRpcUrl),
+        });
+      } catch (e) {
+        console.error('Failed to initialize wallet client:', e.message);
+      }
     }
   }
 

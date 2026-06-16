@@ -1,100 +1,55 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../database');
+const { getFirestore } = require('../database');
 
-const Task = sequelize.define('Task', {
-  id: {
-    type: DataTypes.STRING(66),
-    primaryKey: true,
-  },
-  title: {
-    type: DataTypes.STRING(120),
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  category: {
-    type: DataTypes.STRING(20),
-    allowNull: false,
-  },
-  reward_wei: {
-    type: DataTypes.BIGINT,
-    allowNull: false,
-  },
-  deadline_unix: {
-    type: DataTypes.BIGINT,
-    allowNull: false,
-  },
-  client_address: {
-    type: DataTypes.STRING(42),
-    allowNull: false,
-  },
-  worker_address: {
-    type: DataTypes.STRING(42),
-    allowNull: true,
-  },
-  status: {
-    type: DataTypes.STRING(20),
-    defaultValue: 'open',
-  },
-  deliverable_cid: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-  },
-  rating: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-  release_as_stream: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-  payout_duration_days: {
-    type: DataTypes.INTEGER,
-    defaultValue: 7,
-  },
-  escrow_tx_hash: {
-    type: DataTypes.STRING(66),
-    allowNull: true,
-  },
-  milestones: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-}, {
-  timestamps: true,
-  tableName: 'tasks',
-});
+const COLLECTION = 'tasks';
+const APP_COLLECTION = 'task_applications';
 
-const TaskApplication = sequelize.define('TaskApplication', {
-  id: {
-    type: DataTypes.STRING(66),
-    primaryKey: true,
+const Task = {
+  async create(data) {
+    const db = getFirestore();
+    await db.collection(COLLECTION).doc(data.id).set({
+      ...data,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    return data;
   },
-  task_id: {
-    type: DataTypes.STRING(66),
-    allowNull: false,
+
+  async findAll({ where } = {}) {
+    const db = getFirestore();
+    let query = db.collection(COLLECTION);
+
+    if (where) {
+      Object.entries(where).forEach(([key, value]) => {
+        query = query.where(key, '==', value);
+      });
+    }
+
+    const snapshot = await query.get();
+    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
   },
-  worker_address: {
-    type: DataTypes.STRING(42),
-    allowNull: false,
-  },
-  proposal: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  estimated_days: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-  good_score_at_application: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-}, {
-  timestamps: true,
-  tableName: 'task_applications',
-});
+
+  async findByPk(id) {
+    const db = getFirestore();
+    const doc = await db.collection(COLLECTION).doc(id).get();
+    if (!doc.exists) return null;
+    return { ...doc.data(), id: doc.id, save: async function() {
+      await db.collection(COLLECTION).doc(this.id).update({
+        ...this,
+        updated_at: new Date(),
+      });
+    }};
+  }
+};
+
+const TaskApplication = {
+  async create(data) {
+    const db = getFirestore();
+    await db.collection(APP_COLLECTION).doc(data.id).set({
+      ...data,
+      created_at: new Date(),
+    });
+    return data;
+  }
+};
 
 module.exports = { Task, TaskApplication };

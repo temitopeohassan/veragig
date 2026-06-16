@@ -3,7 +3,6 @@ const { v4: uuidv4 } = require('uuid');
 const { Task, TaskApplication } = require('../models/task');
 const { getIdentityService } = require('../services/identity_service');
 const { getScoreService } = require('../services/score_service');
-const { sequelize } = require('../database');
 
 const router = express.Router();
 
@@ -26,8 +25,8 @@ router.post('/', async (req, res) => {
       title,
       description,
       category,
-      reward_wei: BigInt(reward_wei),
-      deadline_unix: BigInt(deadline_unix),
+      reward_wei: reward_wei.toString(), // Store as string for Firestore
+      deadline_unix: Number(deadline_unix),
       client_address: client_address.toLowerCase(),
       status: 'open',
       release_as_stream: release_as_stream !== undefined ? release_as_stream : true,
@@ -55,7 +54,7 @@ router.get('/', async (req, res) => {
       task_id: t.id,
       title: t.title,
       category: t.category,
-      reward_wei: t.reward_wei.toString(),
+      reward_wei: t.reward_wei,
       deadline_unix: Number(t.deadline_unix),
       client_address: t.client_address,
       status: t.status,
@@ -72,7 +71,9 @@ router.get('/:task_id', async (req, res) => {
     if (!task) {
       return res.status(404).json({ detail: 'Task not found' });
     }
-    res.json(task);
+    // Remove the save function from the response
+    const { save, ...taskData } = task;
+    res.json(taskData);
   } catch (error) {
     console.error('Error getting task:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -98,7 +99,7 @@ router.post('/apply', async (req, res) => {
       task_id,
       worker_address: worker_address.toLowerCase(),
       proposal,
-      estimated_days,
+      estimated_days: estimated_days ? Number(estimated_days) : null,
       good_score_at_application: scoreData.good_score,
     });
 

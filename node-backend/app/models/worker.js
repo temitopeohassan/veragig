@@ -1,62 +1,34 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../database');
+const { getFirestore } = require('../database');
 
-const Worker = sequelize.define('Worker', {
-  address: {
-    type: DataTypes.STRING(42),
-    primaryKey: true,
+const COLLECTION = 'workers';
+
+const Worker = {
+  async create(data) {
+    const db = getFirestore();
+    await db.collection(COLLECTION).doc(data.address).set({
+      ...data,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    return data;
   },
-  is_verified: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+
+  async findByPk(address) {
+    const db = getFirestore();
+    const doc = await db.collection(COLLECTION).doc(address).get();
+    if (!doc.exists) return null;
+    return { ...doc.data(), address: doc.id, save: async function() {
+      await db.collection(COLLECTION).doc(this.address).update({
+        ...this,
+        updated_at: new Date(),
+      });
+    }};
   },
-  good_score: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  loan_tier: {
-    type: DataTypes.STRING(20),
-    defaultValue: 'none',
-  },
-  tasks_completed: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  tasks_accepted: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  disputes_lost: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  loans_repaid_on_time: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  ubi_claim_streak_days: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  earning_consistency_weeks: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  total_earned_wei: {
-    type: DataTypes.BIGINT,
-    defaultValue: 0,
-  },
-  identity_expiry_unix: {
-    type: DataTypes.BIGINT,
-    defaultValue: 0,
-  },
-  last_score_update_block: {
-    type: DataTypes.BIGINT,
-    defaultValue: 0,
-  },
-}, {
-  timestamps: true,
-  tableName: 'workers',
-});
+
+  async update(address, data) {
+    const db = getFirestore();
+    await db.collection(COLLECTION).doc(address).set(data, { merge: true });
+  }
+};
 
 module.exports = { Worker };
