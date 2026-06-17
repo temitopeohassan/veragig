@@ -11,31 +11,39 @@ const initFirestore = () => {
   try {
     let serviceAccount;
 
-    // 1. Try to load from env var first (highest priority in production)
+    // 1. Try to load from env var first
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       const saContent = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
       if (saContent.startsWith('{')) {
         serviceAccount = JSON.parse(saContent);
       } else {
-        // If it's a base64 encoded string (common for complex JSON in env vars)
         try {
           serviceAccount = JSON.parse(Buffer.from(saContent, 'base64').toString());
         } catch (e) {
-          throw new Error('FIREBASE_SERVICE_ACCOUNT is not valid JSON or Base64');
+          console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT as JSON or Base64');
         }
       }
     } 
-    // 2. Try to load from local file path
-    else {
-      const absolutePath = path.resolve(config.firebaseServiceAccount);
+
+    // 2. Try to load from local file path if env var didn't work
+    if (!serviceAccount) {
+      const absolutePath = path.resolve(process.cwd(), config.firebaseServiceAccount);
       if (fs.existsSync(absolutePath)) {
-        serviceAccount = require(absolutePath);
-      } else {
-        throw new Error('Firebase service account not found in env or file system.');
+        try {
+          const fileContent = fs.readFileSync(absolutePath, 'utf8');
+          serviceAccount = JSON.parse(fileContent);
+        } catch (e) {
+          console.error('Failed to read or parse firebase service account file:', e.message);
+        }
       }
     }
 
-    // Fix for private key newlines in environment variables
+    if (!serviceAccount) {
+      console.warn('Firebase credentials not found. Database operations will fail.');
+      return null;
+    }
+
+    // Fix for private key newlines
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
@@ -51,13 +59,17 @@ const initFirestore = () => {
     return db;
   } catch (error) {
     console.error('Firestore initialization error:', error.message);
-    throw error;
+    // Return null instead of throwing to prevent crashing the whole app at startup
+    return null;
   }
 };
 
 const getFirestore = () => {
   if (!db) {
-    return initFirestore();
+    const initialized = initFirestore();
+    if (!initialized) {
+      throw new Error('Database not initialized. Check your FIREBASE_SERVICE_ACCOUNT environment variable.');
+    }
   }
   return db;
 };
