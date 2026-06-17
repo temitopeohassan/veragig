@@ -6,6 +6,17 @@ const path = require('path');
 let db;
 let lastInitError = null;
 
+/**
+ * Sanitize a JSON string by escaping actual newline and carriage return characters.
+ * This handles cases where multi-line JSON was pasted directly into environment variables.
+ */
+const sanitizeJsonString = (str) => {
+  if (!str) return str;
+  // Replace actual newlines with escaped \n, but keep existing escaped \n as is
+  // This is a simple regex that finds characters with char code 10 or 13
+  return str.replace(/[\n\r]/g, '\\n');
+};
+
 const initFirestore = () => {
   if (db) return db;
 
@@ -19,7 +30,9 @@ const initFirestore = () => {
       
       if (saContent.startsWith('{')) {
         try {
-          serviceAccount = JSON.parse(saContent);
+          // Attempt parsing with sanitization for literal newlines
+          const sanitized = sanitizeJsonString(saContent);
+          serviceAccount = JSON.parse(sanitized);
           console.log('Successfully parsed FIREBASE_SERVICE_ACCOUNT as JSON.');
         } catch (e) {
           lastInitError = 'JSON Parse Error: ' + e.message;
@@ -57,7 +70,7 @@ const initFirestore = () => {
       return null;
     }
 
-    // Fix for private key newlines
+    // Fix for private key newlines (both literal and escaped)
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
