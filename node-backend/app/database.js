@@ -5,72 +5,65 @@ const path = require('path');
 
 let db;
 let lastInitError = null;
-
-/**
- * Sanitize a JSON string by escaping actual newline and carriage return characters.
- * This handles cases where multi-line JSON was pasted directly into environment variables.
- */
-const sanitizeJsonString = (str) => {
-  if (!str) return str;
-  // Replace actual newlines with escaped \n, but keep existing escaped \n as is
-  // This is a simple regex that finds characters with char code 10 or 13
-  return str.replace(/[\n\r]/g, '\\n');
-};
+let debugInfo = "";
 
 const initFirestore = () => {
   if (db) return db;
 
   try {
     let serviceAccount;
-    const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    let saContent = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-    if (envVar) {
-      console.log('Attempting to load Firebase credentials from environment variable...');
-      const saContent = envVar.trim();
-      
+    if (saContent) {
+      saContent = saContent.trim();
+      // Remove accidental wrapping quotes if present
+      if ((saContent.startsWith('"') && saContent.endsWith('"')) || 
+          (saContent.startsWith("'") && saContent.endsWith("'"))) {
+        saContent = saContent.slice(1, -1).trim();
+      }
+
+      debugInfo = `Length: ${saContent.length}, Starts with: ${saContent.substring(0, 5)}`;
+
       if (saContent.startsWith('{')) {
         try {
-          // Attempt parsing with sanitization for literal newlines
-          const sanitized = sanitizeJsonString(saContent);
+          // Fix literal newlines that break JSON.parse
+          const sanitized = saContent.replace(/[\n\r]/g, '\\n');
           serviceAccount = JSON.parse(sanitized);
-          console.log('Successfully parsed FIREBASE_SERVICE_ACCOUNT as JSON.');
         } catch (e) {
           lastInitError = 'JSON Parse Error: ' + e.message;
-          console.error(lastInitError);
         }
       } else {
         try {
-          serviceAccount = JSON.parse(Buffer.from(saContent, 'base64').toString());
-          console.log('Successfully parsed FIREBASE_SERVICE_ACCOUNT as Base64.');
+          // Try Base64 decoding
+          const decoded = Buffer.from(saContent, 'base64').toString('utf8');
+          if (decoded.startsWith('{')) {
+            serviceAccount = JSON.parse(decoded);
+          } else {
+            lastInitError = 'Decoded Base64 is not valid JSON';
+          }
         } catch (e) {
-          lastInitError = 'Base64/JSON Parse Error: ' + e.message;
-          console.error(lastInitError);
+          lastInitError = 'Base64/JSON Error: ' + e.message;
         }
       }
     } 
 
     if (!serviceAccount) {
-      console.log('Checking local file path for Firebase credentials:', config.firebaseServiceAccount);
       const absolutePath = path.resolve(process.cwd(), config.firebaseServiceAccount);
       if (fs.existsSync(absolutePath)) {
         try {
-          const fileContent = fs.readFileSync(absolutePath, 'utf8');
-          serviceAccount = JSON.parse(fileContent);
-          console.log('Successfully loaded Firebase credentials from local file.');
+          serviceAccount = JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
         } catch (e) {
-          lastInitError = 'File Read/Parse Error: ' + e.message;
-          console.error(lastInitError);
+          lastInitError = 'File Error: ' + e.message;
         }
       }
     }
 
     if (!serviceAccount) {
-      lastInitError = lastInitError || 'No credentials found in FIREBASE_SERVICE_ACCOUNT or local file.';
-      console.warn(lastInitError);
+      lastInitError = lastInitError || 'No credentials found';
       return null;
     }
 
-    // Fix for private key newlines (both literal and escaped)
+    // Standard fix for private keys
     if (serviceAccount.private_key) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
@@ -82,26 +75,20 @@ const initFirestore = () => {
     }
 
     db = admin.firestore();
-    console.log('Firestore initialized successfully.');
     lastInitError = null;
     return db;
   } catch (error) {
-    lastInitError = 'Initialization Crash: ' + error.message;
-    console.error(lastInitError);
+    lastInitError = 'Crash: ' + error.message;
     return null;
   }
 };
 
-const getFirestore = () => {
-  if (!db) {
-    const initialized = initFirestore();
-    if (!initialized) {
-      throw new Error(lastInitError || 'Database not initialized.');
-    }
-  }
-  return db;
+module.exports = { 
+  connectDB: initFirestore, 
+  getFirestore: () => {
+    const d = initFirestore();
+    if (!d) throw new Error(lastInitError || 'DB not ready');
+    return d;
+  },
+  getDiagnostics: () => ({ error: lastInitError, info: debugInfo })
 };
-
-const getLastError = () => lastInitError;
-
-module.exports = { connectDB: initFirestore, getFirestore, getLastError };
