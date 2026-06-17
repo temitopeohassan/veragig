@@ -4,42 +4,56 @@ const fs = require('fs');
 const path = require('path');
 
 let db;
+let lastInitError = null;
 
 const initFirestore = () => {
   if (db) return db;
 
   try {
     let serviceAccount;
+    const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-    // 1. Try to load from env var first
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const saContent = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+    if (envVar) {
+      console.log('Attempting to load Firebase credentials from environment variable...');
+      const saContent = envVar.trim();
+      
       if (saContent.startsWith('{')) {
-        serviceAccount = JSON.parse(saContent);
+        try {
+          serviceAccount = JSON.parse(saContent);
+          console.log('Successfully parsed FIREBASE_SERVICE_ACCOUNT as JSON.');
+        } catch (e) {
+          lastInitError = 'JSON Parse Error: ' + e.message;
+          console.error(lastInitError);
+        }
       } else {
         try {
           serviceAccount = JSON.parse(Buffer.from(saContent, 'base64').toString());
+          console.log('Successfully parsed FIREBASE_SERVICE_ACCOUNT as Base64.');
         } catch (e) {
-          console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT as JSON or Base64');
+          lastInitError = 'Base64/JSON Parse Error: ' + e.message;
+          console.error(lastInitError);
         }
       }
     } 
 
-    // 2. Try to load from local file path if env var didn't work
     if (!serviceAccount) {
+      console.log('Checking local file path for Firebase credentials:', config.firebaseServiceAccount);
       const absolutePath = path.resolve(process.cwd(), config.firebaseServiceAccount);
       if (fs.existsSync(absolutePath)) {
         try {
           const fileContent = fs.readFileSync(absolutePath, 'utf8');
           serviceAccount = JSON.parse(fileContent);
+          console.log('Successfully loaded Firebase credentials from local file.');
         } catch (e) {
-          console.error('Failed to read or parse firebase service account file:', e.message);
+          lastInitError = 'File Read/Parse Error: ' + e.message;
+          console.error(lastInitError);
         }
       }
     }
 
     if (!serviceAccount) {
-      console.warn('Firebase credentials not found. Database operations will fail.');
+      lastInitError = lastInitError || 'No credentials found in FIREBASE_SERVICE_ACCOUNT or local file.';
+      console.warn(lastInitError);
       return null;
     }
 
@@ -56,10 +70,11 @@ const initFirestore = () => {
 
     db = admin.firestore();
     console.log('Firestore initialized successfully.');
+    lastInitError = null;
     return db;
   } catch (error) {
-    console.error('Firestore initialization error:', error.message);
-    // Return null instead of throwing to prevent crashing the whole app at startup
+    lastInitError = 'Initialization Crash: ' + error.message;
+    console.error(lastInitError);
     return null;
   }
 };
@@ -68,10 +83,12 @@ const getFirestore = () => {
   if (!db) {
     const initialized = initFirestore();
     if (!initialized) {
-      throw new Error('Database not initialized. Check your FIREBASE_SERVICE_ACCOUNT environment variable.');
+      throw new Error(lastInitError || 'Database not initialized.');
     }
   }
   return db;
 };
 
-module.exports = { connectDB: initFirestore, getFirestore };
+const getLastError = () => lastInitError;
+
+module.exports = { connectDB: initFirestore, getFirestore, getLastError };
