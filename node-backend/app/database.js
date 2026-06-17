@@ -68,7 +68,9 @@ const initFirestore = () => {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
 
-    if (!admin.apps.length) {
+    // Robust check for existing apps
+    const currentApps = admin.apps || [];
+    if (currentApps.length === 0) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
       });

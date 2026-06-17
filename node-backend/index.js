@@ -14,6 +14,7 @@ app.use('/tasks', require('./app/routes/tasks'));
 app.use('/score', require('./app/routes/score'));
 app.use('/loans', require('./app/routes/loans'));
 app.use('/ai', require('./app/routes/ai'));
+app.use('/stats', require('./app/routes/stats'));
 
 app.get('/health', (req, res) => {
   const db = connectDB();

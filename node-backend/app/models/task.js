@@ -49,6 +49,12 @@ const TaskApplication = {
       created_at: new Date(),
     });
     return data;
+  },
+
+  async findAll() {
+    const db = getFirestore();
+    const snapshot = await db.collection(APP_COLLECTION).get();
+    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
   }
 };
 

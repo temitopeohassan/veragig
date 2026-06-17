@@ -10,9 +10,9 @@ VeraGig connects verified humans (via GoodDollar Face Verification) to gig work,
 
 ```
 veragig/
-├── frontend/     # Next.js 14 + Wagmi + Viem
-├── backend/      # FastAPI + Gemini API + PostgreSQL
-└── contracts/    # Solidity + Hardhat (Celo)
+├── frontend/      # Next.js 14 + Wagmi + Viem
+├── node-backend/  # Node.js + Express + Firestore + Anthropic Claude
+└── contracts/     # Solidity + Hardhat (Celo)
 ```
 
 ## Key Features
@@ -22,13 +22,13 @@ veragig/
 - **G$ Streaming**: Superfluid CFAv1Forwarder real-time payments
 - **VeraScore**: On-chain credit score (0–850) from task history and UBI signals
 - **Micro-Loans**: Score-gated lending pool with auto-repayment from earnings
-- **AI Matching**: Gemini-powered task-worker matching and deliverable verification
+- **AI Matching**: Claude-powered task-worker matching and deliverable verification
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 20+
-- Python 3.11+
+- A Firebase project (Firestore) with a service account
 - A Celo-compatible wallet (MetaMask, Valora, MiniPay)
 
 ### Frontend
@@ -41,12 +41,14 @@ npm run dev
 
 ### Backend
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload
+cd node-backend
+npm install
+# Create a .env with at least:
+#   FIREBASE_SERVICE_ACCOUNT  (service account JSON, or path to it)
+#   ANTHROPIC_API_KEY
+#   CELO_RPC_URL, BACKEND_PRIVATE_KEY
+#   ESCROW_CONTRACT, SCORE_REGISTRY, LENDING_POOL, FEE_ROUTER
+npm run dev          # nodemon; use `npm start` for production
 ```
 
 ### Contracts

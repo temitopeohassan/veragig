@@ -6,7 +6,7 @@ This project, **VeraGig**, is a hybrid gig marketplace and on-chain micro-credit
 
 ### Architecture
 The project is organized as a multi-component workspace:
-- **`backend/`**: FastAPI (Python) service providing AI matching, credit scoring logic, and task management.
+- **`node-backend/`**: Node.js + Express service (Firestore-backed) providing AI matching, credit scoring logic, and task management.
 - **`contracts/`**: Solidity smart contracts managed with Hardhat. Handles escrow, lending pools, and score registries on Celo.
 - **`frontend/`**: Next.js 14 application using Wagmi/Viem for blockchain interactions and RainbowKit for wallet connectivity.
 
@@ -23,15 +23,14 @@ The project is organized as a multi-component workspace:
 
 ### Prerequisites
 - Node.js 20+
-- Python 3.11+
+- A Firebase project (Firestore) with a service account
 - Hardhat (installed via npm in `contracts/`)
 
-### Backend (FastAPI)
-1. Navigate to `backend/`.
-2. Create and activate a virtual environment: `python -m venv venv`.
-3. Install dependencies: `pip install -r requirements.txt`.
-4. Copy `.env.example` to `.env` and fill in required keys (Anthropic API, Database URLs, Web3 Providers).
-5. Start the server: `uvicorn app.main:app --reload`.
+### Backend (Express)
+1. Navigate to `node-backend/`.
+2. Install dependencies: `npm install`.
+3. Create a `.env` with the required keys (`FIREBASE_SERVICE_ACCOUNT`, `ANTHROPIC_API_KEY`, `CELO_RPC_URL`, `BACKEND_PRIVATE_KEY`, and the contract addresses).
+4. Start the server: `npm run dev` (nodemon) or `npm start`.
 
 ### Smart Contracts (Hardhat)
 1. Navigate to `contracts/`.
@@ -58,9 +57,10 @@ The project is organized as a multi-component workspace:
 - **Testing**: Comprehensive tests are located in `contracts/test/`. Always run `npm run test` before deployment.
 
 ### Backend
-- **Framework**: FastAPI with Pydantic for data validation.
-- **AI Integration**: AI services are encapsulated in `app/services/ai_service.py`.
-- **Blockchain Interaction**: `web3.py` is used for reading on-chain state (e.g., GoodScore signals).
+- **Framework**: Express (Node.js), with route modules under `app/routes/`.
+- **Data Store**: Firestore via `firebase-admin`; models live in `app/models/`.
+- **AI Integration**: AI services are encapsulated in `app/services/ai_service.js` (Anthropic Claude).
+- **Blockchain Interaction**: `viem` is used for reading on-chain state (e.g., GoodScore signals).
 
 ### Frontend
 - **Framework**: Next.js 14 (App Router).
@@ -72,7 +72,7 @@ The project is organized as a multi-component workspace:
 
 ## Key Files & Paths
 
-- `backend/app/main.py`: Entry point for the API.
+- `node-backend/index.js`: Entry point for the API.
 - `contracts/contracts/VeraGigEscrow.sol`: Main escrow logic for task payments.
 - `contracts/contracts/VeraGigLendingPool.sol`: Micro-loan management.
 - `frontend/app/page.tsx`: Landing page.
@@ -81,5 +81,5 @@ The project is organized as a multi-component workspace:
 ## Contribution Workflow
 1. Ensure all environment variables are correctly set.
 2. For contract changes: Update ABIs in `frontend/abis/` after recompiling.
-3. For backend changes: Ensure Pydantic models match the frontend's expected response format.
+3. For backend changes: Ensure Express route response shapes match the frontend's expected format.
 4. For frontend changes: Use the custom hooks provided in `hooks/` for consistent data fetching.

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Zap, TrendingUp, Banknote } from "lucide-react";
+import { StatsSection } from "@/components/StatsSection";
 
 export default function LandingPage() {
   return (
@@ -70,20 +71,7 @@ export default function LandingPage() {
       </section>
 
       {/* Stats */}
-      <section className="rounded-2xl border border-gd-border bg-gd-card p-8">
-        <div className="grid grid-cols-3 gap-8 text-center">
-          {[
-            { label: "Tasks posted", value: "—" },
-            { label: "G$ streamed", value: "—" },
-            { label: "Verified workers", value: "—" },
-          ].map((s) => (
-            <div key={s.label}>
-              <p className="text-3xl font-bold text-gd-green">{s.value}</p>
-              <p className="text-sm text-gd-muted mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <StatsSection />
     </div>
   );
 }
