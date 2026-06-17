@@ -13,6 +13,13 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
+// Initialize Database (Firestore)
+try {
+  connectDB();
+} catch (err) {
+  console.error('Initial database connection failed:', err.message);
+}
+
 // Routes
 app.use('/identity', identityRoutes);
 app.use('/tasks', tasksRoutes);
@@ -21,26 +28,17 @@ app.use('/loans', loansRoutes);
 app.use('/ai', aiRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'veragig-node-api' });
+  res.json({ status: 'ok', service: 'veragig-node-api', database: 'firestore' });
 });
 
 app.get('/', (req, res) => {
-  res.send('Veragig Node.js API is running');
+  res.send('Veragig Node.js API is running on Firestore');
 });
 
-// For Vercel/Production
-if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-  connectDB().catch(err => {
-    console.error('Failed to connect to Firestore on startup:', err.message);
-  });
-} else {
-  // Local development
-  connectDB().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  }).catch(err => {
-    console.error('Failed to start server due to Firestore error:', err.message);
+// For local development
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
   });
 }
 
