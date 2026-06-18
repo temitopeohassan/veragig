@@ -15,6 +15,11 @@
         "internalType": "address",
         "name": "_feeRouter",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_trustedRelayer",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -100,6 +105,31 @@
       }
     ],
     "name": "DisputeResolved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "EmergencyWithdraw",
     "type": "event"
   },
   {
@@ -235,6 +265,25 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oldRelayer",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newRelayer",
+        "type": "address"
+      }
+    ],
+    "name": "TrustedRelayerUpdated",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "BPS_DENOM",
     "outputs": [
@@ -266,6 +315,11 @@
         "internalType": "bytes32",
         "name": "taskId",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "client",
+        "type": "address"
       },
       {
         "internalType": "uint8",
@@ -302,6 +356,11 @@
         "internalType": "bytes32",
         "name": "taskId",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "client",
+        "type": "address"
       }
     ],
     "name": "cancelTask",
@@ -315,6 +374,11 @@
         "internalType": "bytes32",
         "name": "taskId",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "client",
+        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -359,6 +423,29 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "emergencyWithdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -536,6 +623,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "newRelayer",
+        "type": "address"
+      }
+    ],
+    "name": "setTrustedRelayer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "taskId",
         "type": "bytes32"
@@ -626,6 +726,19 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "trustedRelayer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

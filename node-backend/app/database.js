@@ -76,6 +76,7 @@ const initFirestore = () => {
       });
     }
 
+
     db = admin.firestore();
     lastInitError = null;
     return db;

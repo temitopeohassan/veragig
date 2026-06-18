@@ -45,11 +45,16 @@ async function main() {
   console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
 
   // 3. VeraGigEscrow
+  // Trusted relayer = backend signer operated by the official frontend (https://useveragig.online).
+  // Defaults to the deployer; update post-deploy via escrow.setTrustedRelayer(BACKEND_SIGNER).
+  const TRUSTED_RELAYER = process.env.RELAYER_ADDRESS || deployer.address;
+  console.log("Trusted relayer:", TRUSTED_RELAYER);
   const VeraGigEscrow = await ethers.getContractFactory("VeraGigEscrow");
   const escrow = await VeraGigEscrow.deploy(
     G_DOLLAR,
     await scoreRegistry.getAddress(),
-    await feeRouter.getAddress()
+    await feeRouter.getAddress(),
+    TRUSTED_RELAYER
   );
   await escrow.waitForDeployment();
   console.log("VeraGigEscrow:", await escrow.getAddress());
@@ -74,7 +79,9 @@ async function main() {
   console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
   console.log("VeraGigEscrow:", await escrow.getAddress());
   console.log("VeraGigLendingPool:", await lendingPool.getAddress());
+  console.log("Trusted relayer:", TRUSTED_RELAYER);
   console.log("\nUpdate .env.local in frontend with these addresses!");
+  console.log("Set the real backend relayer with: escrow.setTrustedRelayer(BACKEND_SIGNER)");
 }
 
 main().catch((error) => {

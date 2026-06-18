@@ -7,7 +7,7 @@ import { LoanWidget } from "@/components/LoanWidget";
 import { IdentityVerificationPrompt } from "@/components/IdentityVerification";
 import { useIdentityStatus } from "@/hooks/useIdentity";
 import { shortenAddress } from "@/lib/utils";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectPrompt } from "@/components/ConnectPrompt";
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
@@ -15,11 +15,10 @@ export default function DashboardPage() {
 
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-6">
-        <h1 className="text-2xl font-bold">Worker Dashboard</h1>
-        <p className="text-gd-muted">Connect your wallet to view your dashboard.</p>
-        <ConnectButton />
-      </div>
+      <ConnectPrompt
+        title="Worker Dashboard"
+        description="Connect your wallet to view your dashboard."
+      />
     );
   }
 

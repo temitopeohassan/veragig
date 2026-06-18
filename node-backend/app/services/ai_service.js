@@ -15,7 +15,8 @@ class AIService {
   }
 
   async matchTaskToWorkers(taskId, taskDescription, taskCategory, workerProfiles, topK = 10, minGoodScore = 0) {
-    const eligible = workerProfiles.filter(w => (w.good_score || 0) >= minGoodScore);
+    const profiles = workerProfiles || [];
+    const eligible = profiles.filter(w => (w.good_score || 0) >= minGoodScore);
 
     if (eligible.length === 0) {
       return { matches: [] };

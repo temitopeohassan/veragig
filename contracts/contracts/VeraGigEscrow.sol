@@ -32,6 +32,11 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
     IVeraScoreRegistry public scoreRegistry;
     IVeraGigFeeRouter public feeRouter;
 
+    /// @notice Backend signer operated by the official frontend (https://useveragig.online).
+    /// All fund-moving task actions must be submitted by this relayer (or the owner).
+    /// A URL cannot be verified on-chain, so the relayer address is its on-chain proxy.
+    address public trustedRelayer;
+
     uint256 public constant FEE_BPS = 200; // 2%
     uint256 public constant BPS_DENOM = 10000;
 
@@ -60,24 +65,46 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
     event TaskCancelled(bytes32 indexed taskId);
     event DisputeRaised(bytes32 indexed taskId, address indexed raiser, bytes32 disputeId);
     event DisputeResolved(bytes32 indexed taskId, address indexed winner);
+    event TrustedRelayerUpdated(address indexed oldRelayer, address indexed newRelayer);
+    event EmergencyWithdraw(address indexed token, address indexed to, uint256 amount);
+
+    /// @dev Gates all fund-moving task actions to the trusted relayer or the owner (deployer).
+    modifier onlyRelayerOrOwner() {
+        require(msg.sender == trustedRelayer || msg.sender == owner(), "Not relayer or owner");
+        _;
+    }
 
     constructor(
         address _gDollar,
         address _scoreRegistry,
-        address _feeRouter
+        address _feeRouter,
+        address _trustedRelayer
     ) Ownable(msg.sender) {
         gDollar = IERC20(_gDollar);
         scoreRegistry = IVeraScoreRegistry(_scoreRegistry);
         feeRouter = IVeraGigFeeRouter(_feeRouter);
+        trustedRelayer = _trustedRelayer;
+        emit TrustedRelayerUpdated(address(0), _trustedRelayer);
     }
 
+    /// @notice Update the trusted relayer (backend signer for the official frontend).
+    function setTrustedRelayer(address newRelayer) external onlyOwner {
+        require(newRelayer != address(0), "Zero relayer");
+        emit TrustedRelayerUpdated(trustedRelayer, newRelayer);
+        trustedRelayer = newRelayer;
+    }
+
+    /// @notice Create and fund a task on behalf of `client`. Relayer/owner only.
+    /// @dev `client` must have approved this contract for `rewardWei + fee` of G$.
     function createTask(
         bytes32 taskId,
+        address client,
         uint256 rewardWei,
         uint256 deadline,
         bool releaseAsStream,
         uint256 payoutDurationDays
-    ) external nonReentrant {
+    ) external onlyRelayerOrOwner nonReentrant {
+        require(client != address(0), "Zero client");
         require(tasks[taskId].client == address(0), "Task exists");
         require(deadline > block.timestamp, "Deadline in past");
         require(rewardWei > 0, "Reward required");
@@ -85,11 +112,11 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         uint256 fee = (rewardWei * FEE_BPS) / BPS_DENOM;
         uint256 totalRequired = rewardWei + fee;
 
-        gDollar.safeTransferFrom(msg.sender, address(this), totalRequired);
+        gDollar.safeTransferFrom(client, address(this), totalRequired);
 
         tasks[taskId] = Task({
             id: taskId,
-            client: msg.sender,
+            client: client,
             worker: address(0),
             rewardWei: rewardWei,
             deadline: deadline,
@@ -100,7 +127,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
             payoutDurationDays: payoutDurationDays
         });
 
-        emit TaskCreated(taskId, msg.sender, rewardWei, deadline);
+        emit TaskCreated(taskId, client, rewardWei, deadline);
     }
 
     function assignTask(bytes32 taskId, address worker) external {
@@ -121,9 +148,11 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         emit TaskSubmitted(taskId, msg.sender, deliverableCid);
     }
 
-    function approveAndRelease(bytes32 taskId, uint8 rating) external nonReentrant {
+    /// @notice Approve a submitted task and release the reward to the worker. Relayer/owner only.
+    /// @param client The task's client, on whose behalf the relayer acts (must match stored client).
+    function approveAndRelease(bytes32 taskId, address client, uint8 rating) external onlyRelayerOrOwner nonReentrant {
         Task storage task = tasks[taskId];
-        require(task.client == msg.sender, "Not client");
+        require(task.client == client, "Not client");
         require(task.status == TaskStatus.Submitted, "Not submitted");
         require(rating >= 1 && rating <= 5, "Rating 1-5");
 
@@ -142,9 +171,11 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         emit TaskCompleted(taskId, task.worker, rating);
     }
 
-    function cancelTask(bytes32 taskId) external nonReentrant {
+    /// @notice Cancel an open task and refund the client. Relayer/owner only.
+    /// @param client The task's client, on whose behalf the relayer acts (must match stored client).
+    function cancelTask(bytes32 taskId, address client) external onlyRelayerOrOwner nonReentrant {
         Task storage task = tasks[taskId];
-        require(task.client == msg.sender, "Not client");
+        require(task.client == client, "Not client");
         require(task.status == TaskStatus.Open, "Can only cancel open tasks");
 
         task.status = TaskStatus.Cancelled;
@@ -193,5 +224,13 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
     function updateContracts(address _scoreRegistry, address _feeRouter) external onlyOwner {
         scoreRegistry = IVeraScoreRegistry(_scoreRegistry);
         feeRouter = IVeraGigFeeRouter(_feeRouter);
+    }
+
+    /// @notice Owner-only escape hatch: only the deployer can withdraw funds directly from the contract.
+    /// @dev No other address can pull arbitrary funds out; normal payouts flow through the relayer-gated task functions.
+    function emergencyWithdraw(IERC20 token, address to, uint256 amount) external onlyOwner nonReentrant {
+        require(to != address(0), "Zero recipient");
+        token.safeTransfer(to, amount);
+        emit EmergencyWithdraw(address(token), to, amount);
     }
 }

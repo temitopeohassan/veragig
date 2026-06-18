@@ -3,7 +3,7 @@
 import { useAccount } from "wagmi";
 import { LoanWidget } from "@/components/LoanWidget";
 import { GoodScoreWidget } from "@/components/GoodScoreWidget";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectPrompt } from "@/components/ConnectPrompt";
 import { Info } from "lucide-react";
 
 export default function LoanPage() {
@@ -11,11 +11,10 @@ export default function LoanPage() {
 
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-6">
-        <h1 className="text-2xl font-bold">Micro-Loans</h1>
-        <p className="text-gd-muted">Connect your wallet to check loan eligibility.</p>
-        <ConnectButton />
-      </div>
+      <ConnectPrompt
+        title="Micro-Loans"
+        description="Connect your wallet to check loan eligibility."
+      />
     );
   }
 

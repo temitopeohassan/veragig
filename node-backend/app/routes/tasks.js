@@ -3,16 +3,37 @@ const { v4: uuidv4 } = require('uuid');
 const { Task, TaskApplication } = require('../models/task');
 const { getIdentityService } = require('../services/identity_service');
 const { getScoreService } = require('../services/score_service');
+const { getEscrowService } = require('../services/escrow_service');
+const { verifySignedAction } = require('../services/auth_service');
 
 const router = express.Router();
 
+// Wrap verifySignedAction and translate auth failures into a 401 response.
+// Returns true if the response was already sent (caller should stop).
+async function rejectIfUnauthorized(res, params) {
+  try {
+    await verifySignedAction(params);
+    return false;
+  } catch (authErr) {
+    const code = (authErr.message || '').startsWith('AUTH_') ? authErr.message : 'AUTH_FAILED';
+    res.status(401).json({ detail: code });
+    return true;
+  }
+}
+
 router.post('/', async (req, res) => {
   try {
-    const { 
-      task_id, title, description, category, reward_wei, 
-      deadline_unix, client_address, release_as_stream, 
-      payout_duration_days, milestones, escrow_tx_hash 
+    const {
+      task_id, title, description, category, reward_wei,
+      deadline_unix, client_address, release_as_stream,
+      payout_duration_days, milestones, signature, issued_at, nonce
     } = req.body;
+
+    // Prove the caller owns client_address before relaying any funds.
+    if (await rejectIfUnauthorized(res, {
+      action: 'create-task', taskId: task_id, address: client_address,
+      issuedAt: issued_at, nonce, signature,
+    })) return;
 
     const identitySvc = getIdentityService();
     const identity = await identitySvc.getWhitelistedRoot(client_address);
@@ -20,7 +41,28 @@ router.post('/', async (req, res) => {
       return res.status(403).json({ detail: 'IDENTITY_NOT_VERIFIED' });
     }
 
-    const task = await Task.create({
+    const releaseAsStream = release_as_stream !== undefined ? release_as_stream : true;
+    const payoutDays = payout_duration_days || 7;
+
+    // Relay the on-chain createTask through the trusted relayer. The client must have
+    // already approved the escrow contract for reward + 2% fee of G$ from their wallet.
+    let escrowTxHash;
+    try {
+      escrowTxHash = await getEscrowService().createTask({
+        taskId: task_id,
+        client: client_address,
+        rewardWei: reward_wei.toString(),
+        deadlineUnix: Number(deadline_unix),
+        releaseAsStream,
+        payoutDurationDays: payoutDays,
+      });
+    } catch (relayErr) {
+      console.error('Relayer createTask failed:', relayErr);
+      const status = relayErr.message === 'RELAYER_NOT_CONFIGURED' ? 503 : 502;
+      return res.status(status).json({ detail: 'ESCROW_RELAY_FAILED', error: relayErr.message });
+    }
+
+    await Task.create({
       id: task_id,
       title,
       description,
@@ -29,13 +71,13 @@ router.post('/', async (req, res) => {
       deadline_unix: Number(deadline_unix),
       client_address: client_address.toLowerCase(),
       status: 'open',
-      release_as_stream: release_as_stream !== undefined ? release_as_stream : true,
-      payout_duration_days: payout_duration_days || 7,
+      release_as_stream: releaseAsStream,
+      payout_duration_days: payoutDays,
       milestones: milestones ? JSON.stringify(milestones) : null,
-      escrow_tx_hash,
+      escrow_tx_hash: escrowTxHash,
     });
 
-    res.json({ task_id, status: 'open' });
+    res.json({ task_id, status: 'open', escrow_tx_hash: escrowTxHash });
   } catch (error) {
     console.error('Error creating task:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -137,6 +179,94 @@ router.post('/submit', async (req, res) => {
     });
   } catch (error) {
     console.error('Error submitting deliverable:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Approve a submitted task and release the reward to the worker (relayed on-chain).
+router.post('/approve', async (req, res) => {
+  try {
+    const { task_id, client_address, rating, signature, issued_at, nonce } = req.body;
+
+    if (await rejectIfUnauthorized(res, {
+      action: 'approve-task', taskId: task_id, address: client_address,
+      issuedAt: issued_at, nonce, signature,
+    })) return;
+
+    const task = await Task.findByPk(task_id);
+    if (!task) {
+      return res.status(404).json({ detail: 'Task not found' });
+    }
+    if (task.client_address.toLowerCase() !== (client_address || '').toLowerCase()) {
+      return res.status(403).json({ detail: 'NOT_TASK_CLIENT' });
+    }
+    if (task.status !== 'submitted') {
+      return res.status(400).json({ detail: 'TASK_NOT_SUBMITTED' });
+    }
+
+    let txHash;
+    try {
+      txHash = await getEscrowService().approveAndRelease({
+        taskId: task_id,
+        client: task.client_address,
+        rating: Number(rating),
+      });
+    } catch (relayErr) {
+      console.error('Relayer approveAndRelease failed:', relayErr);
+      const status = relayErr.message === 'RELAYER_NOT_CONFIGURED' ? 503 : 502;
+      return res.status(status).json({ detail: 'ESCROW_RELAY_FAILED', error: relayErr.message });
+    }
+
+    task.status = 'completed';
+    task.rating = Number(rating);
+    await task.save();
+
+    res.json({ task_id, status: 'completed', release_tx: txHash });
+  } catch (error) {
+    console.error('Error approving task:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Cancel an open task and refund the client (relayed on-chain).
+router.post('/cancel', async (req, res) => {
+  try {
+    const { task_id, client_address, signature, issued_at, nonce } = req.body;
+
+    if (await rejectIfUnauthorized(res, {
+      action: 'cancel-task', taskId: task_id, address: client_address,
+      issuedAt: issued_at, nonce, signature,
+    })) return;
+
+    const task = await Task.findByPk(task_id);
+    if (!task) {
+      return res.status(404).json({ detail: 'Task not found' });
+    }
+    if (task.client_address.toLowerCase() !== (client_address || '').toLowerCase()) {
+      return res.status(403).json({ detail: 'NOT_TASK_CLIENT' });
+    }
+    if (task.status !== 'open') {
+      return res.status(400).json({ detail: 'TASK_NOT_OPEN' });
+    }
+
+    let txHash;
+    try {
+      txHash = await getEscrowService().cancelTask({
+        taskId: task_id,
+        client: task.client_address,
+      });
+    } catch (relayErr) {
+      console.error('Relayer cancelTask failed:', relayErr);
+      const status = relayErr.message === 'RELAYER_NOT_CONFIGURED' ? 503 : 502;
+      return res.status(status).json({ detail: 'ESCROW_RELAY_FAILED', error: relayErr.message });
+    }
+
+    task.status = 'cancelled';
+    await task.save();
+
+    res.json({ task_id, status: 'cancelled', cancel_tx: txHash });
+  } catch (error) {
+    console.error('Error cancelling task:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

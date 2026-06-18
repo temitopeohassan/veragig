@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits, keccak256, encodePacked, toHex } from "viem";
+import { useAccount, useWriteContract, useSignMessage } from "wagmi";
+import { parseUnits, keccak256, encodePacked } from "viem";
 import { API_URL, CONTRACTS } from "@/lib/contracts";
-import VeraGigEscrowABI from "@/abis/VeraGigEscrow.json";
+import { createAuthPayload } from "@/lib/authSign";
 import ERC20ABI from "@/abis/ERC20.json";
 
 export function useTasks(status = "open", category?: string) {
@@ -37,6 +37,7 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  const { signMessageAsync } = useSignMessage();
 
   return useMutation({
     mutationFn: async (params: {
@@ -59,7 +60,8 @@ export function useCreateTask() {
         )
       );
 
-      // Approve G$ spend
+      // The client approves the escrow contract for reward + fee from their own wallet.
+      // The on-chain createTask itself is then submitted by the backend trusted relayer.
       await writeContractAsync({
         address: CONTRACTS.G_DOLLAR,
         abi: ERC20ABI,
@@ -67,16 +69,16 @@ export function useCreateTask() {
         args: [CONTRACTS.ESCROW, totalWei],
       });
 
-      // Create task on-chain
-      const txHash = await writeContractAsync({
-        address: CONTRACTS.ESCROW,
-        abi: VeraGigEscrowABI,
-        functionName: "createTask",
-        args: [taskId, rewardWei, BigInt(params.deadlineUnix), params.releaseAsStream, BigInt(params.payoutDurationDays)],
+      // Prove wallet ownership so the relayer will act on the client's behalf.
+      const auth = await createAuthPayload(signMessageAsync, {
+        action: "create-task",
+        taskId,
+        address: address!,
       });
 
-      // Register in backend
-      await fetch(`${API_URL}/tasks`, {
+      // Backend relayer creates + funds the task on-chain (pulling the approved G$),
+      // then persists it. Returns the escrow tx hash.
+      const res = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,14 +91,90 @@ export function useCreateTask() {
           client_address: address,
           release_as_stream: params.releaseAsStream,
           payout_duration_days: params.payoutDurationDays,
-          escrow_tx_hash: txHash,
+          ...auth,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || err.error || "Failed to create task");
+      }
+      const data = await res.json();
 
-      return { taskId, txHash };
+      return { taskId, txHash: data.escrow_tx_hash as string | undefined };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+}
+
+// Approve a submitted task; the backend relayer releases the reward to the worker.
+export function useApproveAndRelease() {
+  const queryClient = useQueryClient();
+  const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
+  return useMutation({
+    mutationFn: async (params: { taskId: string; rating: number }) => {
+      const auth = await createAuthPayload(signMessageAsync, {
+        action: "approve-task",
+        taskId: params.taskId,
+        address: address!,
+      });
+      const res = await fetch(`${API_URL}/tasks/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          task_id: params.taskId,
+          client_address: address,
+          rating: params.rating,
+          ...auth,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || err.error || "Failed to approve task");
+      }
+      return res.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task", vars.taskId] });
+    },
+  });
+}
+
+// Cancel an open task; the backend relayer refunds the client.
+export function useCancelTask() {
+  const queryClient = useQueryClient();
+  const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
+  return useMutation({
+    mutationFn: async (params: { taskId: string }) => {
+      const auth = await createAuthPayload(signMessageAsync, {
+        action: "cancel-task",
+        taskId: params.taskId,
+        address: address!,
+      });
+      const res = await fetch(`${API_URL}/tasks/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          task_id: params.taskId,
+          client_address: address,
+          ...auth,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || err.error || "Failed to cancel task");
+      }
+      return res.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task", vars.taskId] });
     },
   });
 }

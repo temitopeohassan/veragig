@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { IdentityBadge } from "./IdentityVerification";
 import { useAccount } from "wagmi";
 import { Menu, X } from "lucide-react";
@@ -43,7 +43,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-4">
           {isConnected && <IdentityBadge />}
-          <ConnectButton
+          <WalletConnectButton
             chainStatus="icon"
             showBalance={{ smallScreen: false, largeScreen: true }}
             accountStatus="avatar"

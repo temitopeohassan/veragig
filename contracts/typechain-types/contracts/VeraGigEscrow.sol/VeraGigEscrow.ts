@@ -72,6 +72,7 @@ export interface VeraGigEscrowInterface extends Interface {
       | "cancelTask"
       | "createTask"
       | "disputes"
+      | "emergencyWithdraw"
       | "feeRouter"
       | "gDollar"
       | "getTask"
@@ -80,9 +81,11 @@ export interface VeraGigEscrowInterface extends Interface {
       | "renounceOwnership"
       | "resolveDispute"
       | "scoreRegistry"
+      | "setTrustedRelayer"
       | "submitDeliverable"
       | "tasks"
       | "transferOwnership"
+      | "trustedRelayer"
       | "updateContracts"
   ): FunctionFragment;
 
@@ -90,19 +93,21 @@ export interface VeraGigEscrowInterface extends Interface {
     nameOrSignatureOrTopic:
       | "DisputeRaised"
       | "DisputeResolved"
+      | "EmergencyWithdraw"
       | "OwnershipTransferred"
       | "TaskAssigned"
       | "TaskCancelled"
       | "TaskCompleted"
       | "TaskCreated"
       | "TaskSubmitted"
+      | "TrustedRelayerUpdated"
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "BPS_DENOM", values?: undefined): string;
   encodeFunctionData(functionFragment: "FEE_BPS", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "approveAndRelease",
-    values: [BytesLike, BigNumberish]
+    values: [BytesLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "assignTask",
@@ -110,13 +115,24 @@ export interface VeraGigEscrowInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "cancelTask",
-    values: [BytesLike]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "createTask",
-    values: [BytesLike, BigNumberish, BigNumberish, boolean, BigNumberish]
+    values: [
+      BytesLike,
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      boolean,
+      BigNumberish
+    ]
   ): string;
   encodeFunctionData(functionFragment: "disputes", values: [BytesLike]): string;
+  encodeFunctionData(
+    functionFragment: "emergencyWithdraw",
+    values: [AddressLike, AddressLike, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "feeRouter", values?: undefined): string;
   encodeFunctionData(functionFragment: "gDollar", values?: undefined): string;
   encodeFunctionData(functionFragment: "getTask", values: [BytesLike]): string;
@@ -138,6 +154,10 @@ export interface VeraGigEscrowInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "setTrustedRelayer",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "submitDeliverable",
     values: [BytesLike, BytesLike]
   ): string;
@@ -145,6 +165,10 @@ export interface VeraGigEscrowInterface extends Interface {
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "trustedRelayer",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "updateContracts",
@@ -161,6 +185,10 @@ export interface VeraGigEscrowInterface extends Interface {
   decodeFunctionResult(functionFragment: "cancelTask", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "createTask", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "disputes", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "emergencyWithdraw",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "feeRouter", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "gDollar", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getTask", data: BytesLike): Result;
@@ -182,12 +210,20 @@ export interface VeraGigEscrowInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setTrustedRelayer",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "submitDeliverable",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "tasks", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "trustedRelayer",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -220,6 +256,24 @@ export namespace DisputeResolvedEvent {
   export interface OutputObject {
     taskId: string;
     winner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace EmergencyWithdrawEvent {
+  export type InputTuple = [
+    token: AddressLike,
+    to: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [token: string, to: string, amount: bigint];
+  export interface OutputObject {
+    token: string;
+    to: string;
+    amount: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -330,6 +384,19 @@ export namespace TaskSubmittedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace TrustedRelayerUpdatedEvent {
+  export type InputTuple = [oldRelayer: AddressLike, newRelayer: AddressLike];
+  export type OutputTuple = [oldRelayer: string, newRelayer: string];
+  export interface OutputObject {
+    oldRelayer: string;
+    newRelayer: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface VeraGigEscrow extends BaseContract {
   connect(runner?: ContractRunner | null): VeraGigEscrow;
   waitForDeployment(): Promise<this>;
@@ -378,7 +445,7 @@ export interface VeraGigEscrow extends BaseContract {
   FEE_BPS: TypedContractMethod<[], [bigint], "view">;
 
   approveAndRelease: TypedContractMethod<
-    [taskId: BytesLike, rating: BigNumberish],
+    [taskId: BytesLike, client: AddressLike, rating: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -389,11 +456,16 @@ export interface VeraGigEscrow extends BaseContract {
     "nonpayable"
   >;
 
-  cancelTask: TypedContractMethod<[taskId: BytesLike], [void], "nonpayable">;
+  cancelTask: TypedContractMethod<
+    [taskId: BytesLike, client: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   createTask: TypedContractMethod<
     [
       taskId: BytesLike,
+      client: AddressLike,
       rewardWei: BigNumberish,
       deadline: BigNumberish,
       releaseAsStream: boolean,
@@ -404,6 +476,12 @@ export interface VeraGigEscrow extends BaseContract {
   >;
 
   disputes: TypedContractMethod<[arg0: BytesLike], [string], "view">;
+
+  emergencyWithdraw: TypedContractMethod<
+    [token: AddressLike, to: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   feeRouter: TypedContractMethod<[], [string], "view">;
 
@@ -432,6 +510,12 @@ export interface VeraGigEscrow extends BaseContract {
   >;
 
   scoreRegistry: TypedContractMethod<[], [string], "view">;
+
+  setTrustedRelayer: TypedContractMethod<
+    [newRelayer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   submitDeliverable: TypedContractMethod<
     [taskId: BytesLike, deliverableCid: BytesLike],
@@ -475,6 +559,8 @@ export interface VeraGigEscrow extends BaseContract {
     "nonpayable"
   >;
 
+  trustedRelayer: TypedContractMethod<[], [string], "view">;
+
   updateContracts: TypedContractMethod<
     [_scoreRegistry: AddressLike, _feeRouter: AddressLike],
     [void],
@@ -494,7 +580,7 @@ export interface VeraGigEscrow extends BaseContract {
   getFunction(
     nameOrSignature: "approveAndRelease"
   ): TypedContractMethod<
-    [taskId: BytesLike, rating: BigNumberish],
+    [taskId: BytesLike, client: AddressLike, rating: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -507,12 +593,17 @@ export interface VeraGigEscrow extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "cancelTask"
-  ): TypedContractMethod<[taskId: BytesLike], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [taskId: BytesLike, client: AddressLike],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "createTask"
   ): TypedContractMethod<
     [
       taskId: BytesLike,
+      client: AddressLike,
       rewardWei: BigNumberish,
       deadline: BigNumberish,
       releaseAsStream: boolean,
@@ -524,6 +615,13 @@ export interface VeraGigEscrow extends BaseContract {
   getFunction(
     nameOrSignature: "disputes"
   ): TypedContractMethod<[arg0: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "emergencyWithdraw"
+  ): TypedContractMethod<
+    [token: AddressLike, to: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "feeRouter"
   ): TypedContractMethod<[], [string], "view">;
@@ -560,6 +658,9 @@ export interface VeraGigEscrow extends BaseContract {
   getFunction(
     nameOrSignature: "scoreRegistry"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "setTrustedRelayer"
+  ): TypedContractMethod<[newRelayer: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "submitDeliverable"
   ): TypedContractMethod<
@@ -602,6 +703,9 @@ export interface VeraGigEscrow extends BaseContract {
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "trustedRelayer"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "updateContracts"
   ): TypedContractMethod<
     [_scoreRegistry: AddressLike, _feeRouter: AddressLike],
@@ -622,6 +726,13 @@ export interface VeraGigEscrow extends BaseContract {
     DisputeResolvedEvent.InputTuple,
     DisputeResolvedEvent.OutputTuple,
     DisputeResolvedEvent.OutputObject
+  >;
+  getEvent(
+    key: "EmergencyWithdraw"
+  ): TypedContractEvent<
+    EmergencyWithdrawEvent.InputTuple,
+    EmergencyWithdrawEvent.OutputTuple,
+    EmergencyWithdrawEvent.OutputObject
   >;
   getEvent(
     key: "OwnershipTransferred"
@@ -665,6 +776,13 @@ export interface VeraGigEscrow extends BaseContract {
     TaskSubmittedEvent.OutputTuple,
     TaskSubmittedEvent.OutputObject
   >;
+  getEvent(
+    key: "TrustedRelayerUpdated"
+  ): TypedContractEvent<
+    TrustedRelayerUpdatedEvent.InputTuple,
+    TrustedRelayerUpdatedEvent.OutputTuple,
+    TrustedRelayerUpdatedEvent.OutputObject
+  >;
 
   filters: {
     "DisputeRaised(bytes32,address,bytes32)": TypedContractEvent<
@@ -687,6 +805,17 @@ export interface VeraGigEscrow extends BaseContract {
       DisputeResolvedEvent.InputTuple,
       DisputeResolvedEvent.OutputTuple,
       DisputeResolvedEvent.OutputObject
+    >;
+
+    "EmergencyWithdraw(address,address,uint256)": TypedContractEvent<
+      EmergencyWithdrawEvent.InputTuple,
+      EmergencyWithdrawEvent.OutputTuple,
+      EmergencyWithdrawEvent.OutputObject
+    >;
+    EmergencyWithdraw: TypedContractEvent<
+      EmergencyWithdrawEvent.InputTuple,
+      EmergencyWithdrawEvent.OutputTuple,
+      EmergencyWithdrawEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<
@@ -753,6 +882,17 @@ export interface VeraGigEscrow extends BaseContract {
       TaskSubmittedEvent.InputTuple,
       TaskSubmittedEvent.OutputTuple,
       TaskSubmittedEvent.OutputObject
+    >;
+
+    "TrustedRelayerUpdated(address,address)": TypedContractEvent<
+      TrustedRelayerUpdatedEvent.InputTuple,
+      TrustedRelayerUpdatedEvent.OutputTuple,
+      TrustedRelayerUpdatedEvent.OutputObject
+    >;
+    TrustedRelayerUpdated: TypedContractEvent<
+      TrustedRelayerUpdatedEvent.InputTuple,
+      TrustedRelayerUpdatedEvent.OutputTuple,
+      TrustedRelayerUpdatedEvent.OutputObject
     >;
   };
 }

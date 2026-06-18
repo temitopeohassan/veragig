@@ -608,8 +608,8 @@
       ]
     },
     "C:\\Users\\IMAGIC STUDIO\\Desktop\\vps\\veragig\\contracts\\contracts\\VeraGigEscrow.sol": {
-      "lastModificationDate": 1781260016859,
-      "contentHash": "0b391ca70e228299d60fccd16f4b6a54",
+      "lastModificationDate": 1781792413445,
+      "contentHash": "aa1284c187186ad8283e4ded96cad608",
       "sourceName": "contracts/VeraGigEscrow.sol",
       "solcConfig": {
         "version": "0.8.24",
