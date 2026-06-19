@@ -4,5 +4,6 @@
 export * as veraGigEscrowSol from "./VeraGigEscrow.sol";
 export * as veraGigLendingPoolSol from "./VeraGigLendingPool.sol";
 export * as mocks from "./mocks";
+export { Account__factory } from "./Account__factory";
 export { VeraGigFeeRouter__factory } from "./VeraGigFeeRouter__factory";
 export { VeraScoreRegistry__factory } from "./VeraScoreRegistry__factory";

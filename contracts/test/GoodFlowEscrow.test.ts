@@ -55,7 +55,7 @@ describe("VeraGigEscrow", () => {
 
     await escrow
       .connect(relayer)
-      .createTask(taskId, client.address, reward, deadline(), true, 7);
+      .createTask(taskId, client.address, reward, deadline());
 
     const task = await escrow.getTask(taskId);
     expect(task.client).to.equal(client.address);
@@ -69,7 +69,7 @@ describe("VeraGigEscrow", () => {
 
     await escrow
       .connect(relayer)
-      .createTask(taskId, client.address, reward, deadline(), false, 7);
+      .createTask(taskId, client.address, reward, deadline());
     // assignTask / submitDeliverable remain user-callable (no fund movement)
     await escrow.connect(client).assignTask(taskId, worker.address);
 
@@ -90,7 +90,7 @@ describe("VeraGigEscrow", () => {
     const clientBalanceBefore = await mockToken.balanceOf(client.address);
     await escrow
       .connect(relayer)
-      .createTask(taskId, client.address, reward, deadline(), true, 7);
+      .createTask(taskId, client.address, reward, deadline());
     await escrow.connect(relayer).cancelTask(taskId, client.address);
 
     const clientBalanceAfter = await mockToken.balanceOf(client.address);
@@ -102,7 +102,7 @@ describe("VeraGigEscrow", () => {
       const taskId = ethers.id("task-owner");
       await escrow
         .connect(owner)
-        .createTask(taskId, client.address, ethers.parseEther("10"), deadline(), false, 7);
+        .createTask(taskId, client.address, ethers.parseEther("10"), deadline());
       expect((await escrow.getTask(taskId)).client).to.equal(client.address);
     });
 
@@ -111,14 +111,14 @@ describe("VeraGigEscrow", () => {
       await expect(
         escrow
           .connect(attacker)
-          .createTask(taskId, client.address, ethers.parseEther("10"), deadline(), false, 7)
+          .createTask(taskId, client.address, ethers.parseEther("10"), deadline())
       ).to.be.revertedWith("Not relayer or owner");
     });
 
     it("reverts approveAndRelease and cancelTask from non-relayer callers", async () => {
       const taskId = ethers.id("task-guard");
       const reward = ethers.parseEther("20");
-      await escrow.connect(relayer).createTask(taskId, client.address, reward, deadline(), false, 7);
+      await escrow.connect(relayer).createTask(taskId, client.address, reward, deadline());
 
       // client can no longer release/cancel directly — must go through the relayer
       await expect(
@@ -135,7 +135,7 @@ describe("VeraGigEscrow", () => {
     it("reverts when relayer names the wrong client", async () => {
       const taskId = ethers.id("task-wrongclient");
       const reward = ethers.parseEther("20");
-      await escrow.connect(relayer).createTask(taskId, client.address, reward, deadline(), false, 7);
+      await escrow.connect(relayer).createTask(taskId, client.address, reward, deadline());
       await expect(
         escrow.connect(relayer).cancelTask(taskId, attacker.address)
       ).to.be.revertedWith("Not client");
@@ -165,7 +165,7 @@ describe("VeraGigEscrow", () => {
       // Fund the escrow via a task deposit
       const taskId = ethers.id("task-ew");
       const reward = ethers.parseEther("100");
-      await escrow.connect(relayer).createTask(taskId, client.address, reward, deadline(), false, 7);
+      await escrow.connect(relayer).createTask(taskId, client.address, reward, deadline());
 
       const escrowAddr = await escrow.getAddress();
       const balance = await mockToken.balanceOf(escrowAddr);

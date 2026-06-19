@@ -4,7 +4,7 @@ dotenv.config();
 
 // G$ token addresses per network
 const G_DOLLAR_ADDRESSES: Record<string, string> = {
-  celo: "0x62B8B11039fcfE5AB0C56E502b1C372A3D2a9C7A",       // Celo Mainnet
+  celo: "0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A",       // Celo Mainnet
   "celo-sepolia": "0x0000000000000000000000000000000000000000", // placeholder — set G_DOLLAR_ADDRESS in .env
 };
 
@@ -30,13 +30,34 @@ async function main() {
   }
 
   console.log("G$ token:", G_DOLLAR);
-  const TREASURY = deployer.address; // Update before mainnet deploy
+  // Treasury / UBI pool for the fee router. Defaults to the deployer; set
+  // TREASURY_ADDRESS in .env to route fees to a dedicated treasury/multisig.
+  const TREASURY = process.env.TREASURY_ADDRESS || deployer.address;
+  console.log("Treasury / UBI pool:", TREASURY);
 
-  // 1. VeraScoreRegistry
+  // 0. Account registry (records wallets that have created a profile).
+  // Set ACCOUNT_ADDRESS in .env to reuse an already-deployed Account (resume a
+  // partial deploy) instead of paying to deploy a fresh one.
+  const Account = await ethers.getContractFactory("Account");
+  const accountRegistry = process.env.ACCOUNT_ADDRESS
+    ? Account.attach(process.env.ACCOUNT_ADDRESS)
+    : await Account.deploy();
+  await accountRegistry.waitForDeployment();
+  console.log(
+    process.env.ACCOUNT_ADDRESS ? "Account (reused):" : "Account:",
+    await accountRegistry.getAddress()
+  );
+
+  // 1. VeraScoreRegistry. Set SCORE_REGISTRY_ADDRESS in .env to reuse a deployed one.
   const VeraScoreRegistry = await ethers.getContractFactory("VeraScoreRegistry");
-  const scoreRegistry = await VeraScoreRegistry.deploy();
+  const scoreRegistry = process.env.SCORE_REGISTRY_ADDRESS
+    ? VeraScoreRegistry.attach(process.env.SCORE_REGISTRY_ADDRESS)
+    : await VeraScoreRegistry.deploy();
   await scoreRegistry.waitForDeployment();
-  console.log("VeraScoreRegistry:", await scoreRegistry.getAddress());
+  console.log(
+    process.env.SCORE_REGISTRY_ADDRESS ? "VeraScoreRegistry (reused):" : "VeraScoreRegistry:",
+    await scoreRegistry.getAddress()
+  );
 
   // 2. VeraGigFeeRouter (UBI pool = deployer for now, update post-deploy)
   const VeraGigFeeRouter = await ethers.getContractFactory("VeraGigFeeRouter");
@@ -75,6 +96,7 @@ async function main() {
   await scoreRegistry.setAuthorizedUpdater(await escrow.getAddress(), true);
 
   console.log("\n--- Deployment Summary ---");
+  console.log("Account:", await accountRegistry.getAddress());
   console.log("VeraScoreRegistry:", await scoreRegistry.getAddress());
   console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
   console.log("VeraGigEscrow:", await escrow.getAddress());

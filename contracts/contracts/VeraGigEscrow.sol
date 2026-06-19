@@ -51,8 +51,6 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         TaskStatus status;
         bytes32 deliverableCid;
         uint8 rating;
-        bool releaseAsStream;
-        uint256 payoutDurationDays;
     }
 
     mapping(bytes32 => Task) public tasks;
@@ -100,9 +98,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         bytes32 taskId,
         address client,
         uint256 rewardWei,
-        uint256 deadline,
-        bool releaseAsStream,
-        uint256 payoutDurationDays
+        uint256 deadline
     ) external onlyRelayerOrOwner nonReentrant {
         require(client != address(0), "Zero client");
         require(tasks[taskId].client == address(0), "Task exists");
@@ -122,9 +118,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
             deadline: deadline,
             status: TaskStatus.Open,
             deliverableCid: bytes32(0),
-            rating: 0,
-            releaseAsStream: releaseAsStream,
-            payoutDurationDays: payoutDurationDays
+            rating: 0
         });
 
         emit TaskCreated(taskId, client, rewardWei, deadline);
@@ -165,7 +159,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         gDollar.forceApprove(address(feeRouter), fee);
         feeRouter.routeFee(taskId, task.rewardWei, task.client);
 
-        // Release reward to worker (lump sum — streaming handled off-chain via Superfluid)
+        // Release reward to worker as a lump sum.
         gDollar.safeTransfer(task.worker, task.rewardWei);
 
         emit TaskCompleted(taskId, task.worker, rating);

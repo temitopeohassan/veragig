@@ -28,6 +28,8 @@ export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
 export type { ReentrancyGuard } from "./@openzeppelin/contracts/utils/ReentrancyGuard";
 export { ReentrancyGuard__factory } from "./factories/@openzeppelin/contracts/utils/ReentrancyGuard__factory";
+export type { Account } from "./contracts/Account";
+export { Account__factory } from "./factories/contracts/Account__factory";
 export type { ERC20Mock } from "./contracts/mocks/ERC20Mock";
 export { ERC20Mock__factory } from "./factories/contracts/mocks/ERC20Mock__factory";
 export type { IVeraGigFeeRouter } from "./contracts/VeraGigEscrow.sol/IVeraGigFeeRouter";

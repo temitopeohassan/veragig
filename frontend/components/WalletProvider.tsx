@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { wagmiConfig } from "@/lib/wagmi";
 import { MiniPayAutoConnect } from "@/components/MiniPayAutoConnect";
+import { ProfileGate } from "@/components/ProfileGate";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           })}
         >
           <MiniPayAutoConnect />
+          <ProfileGate />
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

@@ -33,8 +33,6 @@ export declare namespace VeraGigEscrow {
     status: BigNumberish;
     deliverableCid: BytesLike;
     rating: BigNumberish;
-    releaseAsStream: boolean;
-    payoutDurationDays: BigNumberish;
   };
 
   export type TaskStructOutput = [
@@ -45,9 +43,7 @@ export declare namespace VeraGigEscrow {
     deadline: bigint,
     status: bigint,
     deliverableCid: string,
-    rating: bigint,
-    releaseAsStream: boolean,
-    payoutDurationDays: bigint
+    rating: bigint
   ] & {
     id: string;
     client: string;
@@ -57,8 +53,6 @@ export declare namespace VeraGigEscrow {
     status: bigint;
     deliverableCid: string;
     rating: bigint;
-    releaseAsStream: boolean;
-    payoutDurationDays: bigint;
   };
 }
 
@@ -119,14 +113,7 @@ export interface VeraGigEscrowInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createTask",
-    values: [
-      BytesLike,
-      AddressLike,
-      BigNumberish,
-      BigNumberish,
-      boolean,
-      BigNumberish
-    ]
+    values: [BytesLike, AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "disputes", values: [BytesLike]): string;
   encodeFunctionData(
@@ -467,9 +454,7 @@ export interface VeraGigEscrow extends BaseContract {
       taskId: BytesLike,
       client: AddressLike,
       rewardWei: BigNumberish,
-      deadline: BigNumberish,
-      releaseAsStream: boolean,
-      payoutDurationDays: BigNumberish
+      deadline: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -526,18 +511,7 @@ export interface VeraGigEscrow extends BaseContract {
   tasks: TypedContractMethod<
     [arg0: BytesLike],
     [
-      [
-        string,
-        string,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        bigint,
-        boolean,
-        bigint
-      ] & {
+      [string, string, string, bigint, bigint, bigint, string, bigint] & {
         id: string;
         client: string;
         worker: string;
@@ -546,8 +520,6 @@ export interface VeraGigEscrow extends BaseContract {
         status: bigint;
         deliverableCid: string;
         rating: bigint;
-        releaseAsStream: boolean;
-        payoutDurationDays: bigint;
       }
     ],
     "view"
@@ -605,9 +577,7 @@ export interface VeraGigEscrow extends BaseContract {
       taskId: BytesLike,
       client: AddressLike,
       rewardWei: BigNumberish,
-      deadline: BigNumberish,
-      releaseAsStream: boolean,
-      payoutDurationDays: BigNumberish
+      deadline: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -673,18 +643,7 @@ export interface VeraGigEscrow extends BaseContract {
   ): TypedContractMethod<
     [arg0: BytesLike],
     [
-      [
-        string,
-        string,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        bigint,
-        boolean,
-        bigint
-      ] & {
+      [string, string, string, bigint, bigint, bigint, string, bigint] & {
         id: string;
         client: string;
         worker: string;
@@ -693,8 +652,6 @@ export interface VeraGigEscrow extends BaseContract {
         status: bigint;
         deliverableCid: string;
         rating: bigint;
-        releaseAsStream: boolean;
-        payoutDurationDays: bigint;
       }
     ],
     "view"

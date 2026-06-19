@@ -15,9 +15,12 @@ router.get('/', async (req, res) => {
 
     const tasksPosted = tasks.length;
 
-    // Sum reward_wei (stored as strings) for tasks whose funds have started streaming.
+    // Sum reward_wei (stored as strings) for tasks whose funds have started
+    // streaming. Only tasks flagged release_as_stream count toward "G$ streamed";
+    // lump-sum payouts are excluded. (Legacy/undefined defaults to streamed.)
     const gStreamedWei = tasks.reduce((sum, t) => {
       if (!STREAMED_STATUSES.has(t.status)) return sum;
+      if (t.release_as_stream === false) return sum;
       try {
         return sum + BigInt(t.reward_wei || '0');
       } catch {

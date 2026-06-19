@@ -13,13 +13,14 @@ const config = {
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379/0',
 
   // Contract addresses
-  escrowContract: process.env.ESCROW_CONTRACT || '0x0000000000000000000000000000000000000000',
-  scoreRegistry: process.env.SCORE_REGISTRY || '0x0000000000000000000000000000000000000000',
-  lendingPool: process.env.LENDING_POOL || '0x0000000000000000000000000000000000000000',
-  feeRouter: process.env.FEE_ROUTER || '0x0000000000000000000000000000000000000000',
+  accountContract: process.env.ACCOUNT_CONTRACT || '0x3FBcCD2496A22C2C4247D2c985EC47EaFa76638e',
+  escrowContract: process.env.ESCROW_CONTRACT || '0xDa4F6EE5f77883a901F1509b8B3548b95BAfCE5f',
+  scoreRegistry: process.env.SCORE_REGISTRY || '0xac9861Bf37588Bc17D5B60Bf1EB47C664a572510',
+  lendingPool: process.env.LENDING_POOL || '0x52E0220fe011923f28440C851ae0efD6B3d63f06',
+  feeRouter: process.env.FEE_ROUTER || '0xE27c10d0a730b0E4B54EF199f54Bc2f7feC1A7B6',
 
   // Known contracts
-  gDollarAddress: '0x62B8B11039fcfE5AB0C56E502b1C372A3D2a9C7A',
+  gDollarAddress: '0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A',
   identityContract: '0xC361A6E67822a0EDc17D899227dd9FC50BD62F42',
   cfaForwarder: '0xcfA132E353cB4E398080B9700609bb008eceB125',
 };

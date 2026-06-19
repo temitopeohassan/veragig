@@ -13,6 +13,7 @@ const navLinks = [
   { href: "/post-task", label: "Post Task" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/loan", label: "Loans" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export function Navbar() {

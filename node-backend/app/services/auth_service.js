@@ -2,9 +2,12 @@ const { recoverMessageAddress, getAddress, keccak256, toHex } = require('viem');
 const { getFirestore } = require('../database');
 
 // Signed-message auth: a request must carry a wallet signature over a canonical
-// message that binds the action + task + signer + a timestamp + a random nonce.
+// message that binds the action + subject + signer + a timestamp + a random nonce.
 // We verify the signature recovers to the claimed address, that it is fresh, and
 // that it has not been used before (replay protection).
+//
+// `subject` is whatever the action is scoped to: a task id for task actions, or
+// the wallet address for profile actions.
 
 const SIG_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const USED_COLLECTION = 'used_signatures';
@@ -13,12 +16,12 @@ const USED_COLLECTION = 'used_signatures';
  * Build the canonical message to sign. MUST stay byte-for-byte identical to the
  * frontend builder in `frontend/lib/authSign.ts`.
  */
-function buildActionMessage({ action, taskId, address, issuedAt, nonce }) {
+function buildActionMessage({ action, subject, address, issuedAt, nonce }) {
   return [
     'VeraGig authorization request.',
     '',
     `Action: ${action}`,
-    `Task: ${taskId}`,
+    `Subject: ${subject}`,
     `Address: ${getAddress(address)}`,
     `Issued At: ${issuedAt}`,
     `Nonce: ${nonce}`,
@@ -31,7 +34,7 @@ function buildActionMessage({ action, taskId, address, issuedAt, nonce }) {
  *
  * @returns {Promise<string>} the checksummed, verified signer address.
  */
-async function verifySignedAction({ action, taskId, address, issuedAt, nonce, signature }) {
+async function verifySignedAction({ action, subject, address, issuedAt, nonce, signature }) {
   if (!address || !signature || !issuedAt || !nonce) {
     throw new Error('AUTH_MISSING_FIELDS');
   }
@@ -43,7 +46,7 @@ async function verifySignedAction({ action, taskId, address, issuedAt, nonce, si
   }
 
   // Verify the signature recovers to the claimed address (EOA signatures).
-  const message = buildActionMessage({ action, taskId, address, issuedAt, nonce });
+  const message = buildActionMessage({ action, subject, address, issuedAt, nonce });
   let recovered;
   try {
     recovered = await recoverMessageAddress({ message, signature });

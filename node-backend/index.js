@@ -10,6 +10,7 @@ app.use(express.json());
 
 // Lazy-load routes to prevent top-level crashes
 app.use('/identity', require('./app/routes/identity'));
+app.use('/profiles', require('./app/routes/profiles'));
 app.use('/tasks', require('./app/routes/tasks'));
 app.use('/score', require('./app/routes/score'));
 app.use('/loans', require('./app/routes/loans'));

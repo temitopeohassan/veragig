@@ -72,7 +72,7 @@ export function useCreateTask() {
       // Prove wallet ownership so the relayer will act on the client's behalf.
       const auth = await createAuthPayload(signMessageAsync, {
         action: "create-task",
-        taskId,
+        subject: taskId,
         address: address!,
       });
 
@@ -118,7 +118,7 @@ export function useApproveAndRelease() {
     mutationFn: async (params: { taskId: string; rating: number }) => {
       const auth = await createAuthPayload(signMessageAsync, {
         action: "approve-task",
-        taskId: params.taskId,
+        subject: params.taskId,
         address: address!,
       });
       const res = await fetch(`${API_URL}/tasks/approve`, {
@@ -154,7 +154,7 @@ export function useCancelTask() {
     mutationFn: async (params: { taskId: string }) => {
       const auth = await createAuthPayload(signMessageAsync, {
         action: "cancel-task",
-        taskId: params.taskId,
+        subject: params.taskId,
         address: address!,
       });
       const res = await fetch(`${API_URL}/tasks/cancel`, {

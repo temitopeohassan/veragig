@@ -1,21 +1,29 @@
 import { getAddress } from "viem";
 
-// Signed-message auth payload sent alongside relayer requests.
+// Signed-message auth payload sent alongside relayer / profile requests.
 export interface AuthPayload {
   signature: string;
   issued_at: string;
   nonce: string;
 }
 
-export type AuthAction = "create-task" | "approve-task" | "cancel-task";
+export type AuthAction =
+  | "create-task"
+  | "approve-task"
+  | "cancel-task"
+  | "create-profile"
+  | "update-profile";
 
 /**
  * Build the canonical message to sign. MUST stay byte-for-byte identical to the
  * backend builder in `node-backend/app/services/auth_service.js`.
+ *
+ * `subject` is whatever the action is scoped to: a task id for task actions, or
+ * the wallet address for profile actions.
  */
 export function buildActionMessage(params: {
   action: AuthAction;
-  taskId: string;
+  subject: string;
   address: string;
   issuedAt: string;
   nonce: string;
@@ -24,7 +32,7 @@ export function buildActionMessage(params: {
     "VeraGig authorization request.",
     "",
     `Action: ${params.action}`,
-    `Task: ${params.taskId}`,
+    `Subject: ${params.subject}`,
     `Address: ${getAddress(params.address)}`,
     `Issued At: ${params.issuedAt}`,
     `Nonce: ${params.nonce}`,
@@ -39,7 +47,7 @@ export function buildActionMessage(params: {
  */
 export async function createAuthPayload(
   signMessageAsync: (args: { message: string }) => Promise<string>,
-  params: { action: AuthAction; taskId: string; address: string }
+  params: { action: AuthAction; subject: string; address: string }
 ): Promise<AuthPayload> {
   const issuedAt = new Date().toISOString();
   const nonce = crypto.randomUUID();

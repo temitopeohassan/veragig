@@ -389,16 +389,6 @@
         "internalType": "uint256",
         "name": "deadline",
         "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "releaseAsStream",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "payoutDurationDays",
-        "type": "uint256"
       }
     ],
     "name": "createTask",
@@ -525,16 +515,6 @@
             "internalType": "uint8",
             "name": "rating",
             "type": "uint8"
-          },
-          {
-            "internalType": "bool",
-            "name": "releaseAsStream",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "payoutDurationDays",
-            "type": "uint256"
           }
         ],
         "internalType": "struct VeraGigEscrow.Task",
@@ -700,16 +680,6 @@
         "internalType": "uint8",
         "name": "rating",
         "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "releaseAsStream",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "payoutDurationDays",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",

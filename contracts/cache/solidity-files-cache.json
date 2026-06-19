@@ -608,8 +608,8 @@
       ]
     },
     "C:\\Users\\IMAGIC STUDIO\\Desktop\\vps\\veragig\\contracts\\contracts\\VeraGigEscrow.sol": {
-      "lastModificationDate": 1781792413445,
-      "contentHash": "aa1284c187186ad8283e4ded96cad608",
+      "lastModificationDate": 1781802993938,
+      "contentHash": "a2eb4c31a67141d06b6dbb7c707e4867",
       "sourceName": "contracts/VeraGigEscrow.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -688,6 +688,42 @@
       ],
       "artifacts": [
         "VeraGigFeeRouter"
+      ]
+    },
+    "C:\\Users\\IMAGIC STUDIO\\Desktop\\vps\\veragig\\contracts\\contracts\\Account.sol": {
+      "lastModificationDate": 1781878779006,
+      "contentHash": "6c9306fc6dbbb58094cc310146cd545f",
+      "sourceName": "contracts/Account.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "Account"
       ]
     }
   }

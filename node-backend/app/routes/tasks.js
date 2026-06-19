@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
 
     // Prove the caller owns client_address before relaying any funds.
     if (await rejectIfUnauthorized(res, {
-      action: 'create-task', taskId: task_id, address: client_address,
+      action: 'create-task', subject: task_id, address: client_address,
       issuedAt: issued_at, nonce, signature,
     })) return;
 
@@ -53,8 +53,6 @@ router.post('/', async (req, res) => {
         client: client_address,
         rewardWei: reward_wei.toString(),
         deadlineUnix: Number(deadline_unix),
-        releaseAsStream,
-        payoutDurationDays: payoutDays,
       });
     } catch (relayErr) {
       console.error('Relayer createTask failed:', relayErr);
@@ -189,7 +187,7 @@ router.post('/approve', async (req, res) => {
     const { task_id, client_address, rating, signature, issued_at, nonce } = req.body;
 
     if (await rejectIfUnauthorized(res, {
-      action: 'approve-task', taskId: task_id, address: client_address,
+      action: 'approve-task', subject: task_id, address: client_address,
       issuedAt: issued_at, nonce, signature,
     })) return;
 
@@ -234,7 +232,7 @@ router.post('/cancel', async (req, res) => {
     const { task_id, client_address, signature, issued_at, nonce } = req.body;
 
     if (await rejectIfUnauthorized(res, {
-      action: 'cancel-task', taskId: task_id, address: client_address,
+      action: 'cancel-task', subject: task_id, address: client_address,
       issuedAt: issued_at, nonce, signature,
     })) return;
 

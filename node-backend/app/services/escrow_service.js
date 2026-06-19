@@ -10,9 +10,7 @@ const ESCROW_ABI = [
       { "internalType": "bytes32", "name": "taskId", "type": "bytes32" },
       { "internalType": "address", "name": "client", "type": "address" },
       { "internalType": "uint256", "name": "rewardWei", "type": "uint256" },
-      { "internalType": "uint256", "name": "deadline", "type": "uint256" },
-      { "internalType": "bool", "name": "releaseAsStream", "type": "bool" },
-      { "internalType": "uint256", "name": "payoutDurationDays", "type": "uint256" }
+      { "internalType": "uint256", "name": "deadline", "type": "uint256" }
     ],
     "name": "createTask",
     "outputs": [],
@@ -78,7 +76,7 @@ class EscrowService {
    * Relay createTask on behalf of `client`. The client must have approved the
    * escrow contract for rewardWei + 2% fee of G$ before this is called.
    */
-  async createTask({ taskId, client, rewardWei, deadlineUnix, releaseAsStream, payoutDurationDays }) {
+  async createTask({ taskId, client, rewardWei, deadlineUnix }) {
     this._requireSigner();
     return this.walletClient.writeContract({
       address: getAddress(config.escrowContract),
@@ -89,8 +87,6 @@ class EscrowService {
         getAddress(client),
         BigInt(rewardWei),
         BigInt(deadlineUnix),
-        Boolean(releaseAsStream),
-        BigInt(payoutDurationDays),
       ],
     });
   }

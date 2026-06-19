@@ -7,5 +7,6 @@ import type * as veraGigLendingPoolSol from "./VeraGigLendingPool.sol";
 export type { veraGigLendingPoolSol };
 import type * as mocks from "./mocks";
 export type { mocks };
+export type { Account } from "./Account";
 export type { VeraGigFeeRouter } from "./VeraGigFeeRouter";
 export type { VeraScoreRegistry } from "./VeraScoreRegistry";
