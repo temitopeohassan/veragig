@@ -20,15 +20,25 @@ export function ProfileGate() {
   // Distinguish a fresh user connect from an auto-reconnect on page load:
   // only redirect after we've actually observed a disconnected state.
   const sawDisconnected = useRef(false);
+  // Track whether we were previously connected so an actual disconnect (not the
+  // initial disconnected state on page load) redirects the user back home.
+  const wasConnected = useRef(false);
 
   useEffect(() => {
     if (status === "disconnected") {
       sawDisconnected.current = true;
+      if (wasConnected.current) {
+        wasConnected.current = false;
+        router.push("/");
+      }
       return;
     }
-    if (status === "connected" && sawDisconnected.current && profile) {
-      sawDisconnected.current = false;
-      router.push("/dashboard");
+    if (status === "connected") {
+      wasConnected.current = true;
+      if (sawDisconnected.current && profile) {
+        sawDisconnected.current = false;
+        router.push("/dashboard");
+      }
     }
   }, [status, profile, router]);
 
