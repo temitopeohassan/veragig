@@ -1,4 +1,5 @@
-const admin = require('firebase-admin');
+const { initializeApp, getApps, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 const config = require('./config');
 const fs = require('fs');
 const path = require('path');
@@ -69,15 +70,14 @@ const initFirestore = () => {
     }
 
     // Robust check for existing apps
-    const currentApps = admin.apps || [];
-    if (currentApps.length === 0) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+    if (getApps().length === 0) {
+      initializeApp({
+        credential: cert(serviceAccount)
       });
     }
 
 
-    db = admin.firestore();
+    db = getFirestore();
     lastInitError = null;
     return db;
   } catch (error) {
