@@ -64,13 +64,25 @@ npm run deploy:celo
 
 | Contract | Address |
 |---|---|
+| VeraGigEscrow | [`0x215af329A2142361730eed1aA83aed656Ed2F194`](https://celoscan.io/address/0x215af329A2142361730eed1aA83aed656Ed2F194#code) |
+| VeraGigFeeRouter | [`0x8CF2B033dE82c861DD0Fb60F25031C5D9c328Bb2`](https://celoscan.io/address/0x8CF2B033dE82c861DD0Fb60F25031C5D9c328Bb2#code) |
+| VeraScoreRegistry | `0xac9861Bf37588Bc17D5B60Bf1EB47C664a572510` |
+| VeraGigLendingPool | `0x52E0220fe011923f28440C851ae0efD6B3d63f06` |
+| Account registry | `0x3FBcCD2496A22C2C4247D2c985EC47EaFa76638e` |
 | GoodDollar Identity | `0xC361A6E67822a0EDc17D899227dd9FC50BD62F42` |
-| G$ Token | `0x62B8B11039fcfE5AB0C56E502b1C372A3D2a9C7A` |
 | CFAv1Forwarder | `0xcfA132E353cB4E398080B9700609bb008eceB125` |
-| VeraGigEscrow | TBD after deployment |
-| VeraScoreRegistry | TBD after deployment |
-| VeraGigLendingPool | TBD after deployment |
-| VeraGigFeeRouter | TBD after deployment |
+
+`VeraGigEscrow` and `VeraGigFeeRouter` are source-verified on Celoscan (links above).
+
+### Reward tokens (escrow whitelist)
+
+Tasks can be funded and paid out in any of these ERC-20s:
+
+| Token | Address | Decimals |
+|---|---|---|
+| G$ (GoodDollar) | `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A` | 18 |
+| USD₮ (native Tether) | `0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e` | 6 |
+| CELO | `0x471EcE3750Da237f93B8E339c536989b8978a438` | 18 |
 
 ## Author
 
