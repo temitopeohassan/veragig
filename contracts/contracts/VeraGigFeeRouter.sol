@@ -5,10 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/// @title VeraGig fee router (multi-token)
+/// @notice Splits the 2% platform fee 50/50 between the Worker Advancement Pool
+///         and the treasury, in whichever ERC-20 token settled the task.
+/// @dev The fee is pulled from the calling escrow (which already holds reward+fee
+///      from task creation and approves this router for the fee). This is the
+///      authorized caller, not the original payer.
 contract VeraGigFeeRouter is Ownable {
     using SafeERC20 for IERC20;
-
-    IERC20 public immutable gDollar;
 
     address public ubiPool;        // VeraCollective Worker Advancement Pool
     address public treasury;       // VeraGig treasury
@@ -22,13 +26,13 @@ contract VeraGigFeeRouter is Ownable {
 
     event FeeRouted(
         bytes32 indexed taskId,
+        address indexed token,
         uint256 settlementAmount,
         uint256 ubiContribution,
         uint256 treasuryContribution
     );
 
-    constructor(address _gDollar, address _ubiPool, address _treasury) Ownable(msg.sender) {
-        gDollar = IERC20(_gDollar);
+    constructor(address _ubiPool, address _treasury) Ownable(msg.sender) {
         ubiPool = _ubiPool;
         treasury = _treasury;
     }
@@ -47,17 +51,21 @@ contract VeraGigFeeRouter is Ownable {
         treasury = _treasury;
     }
 
-    function routeFee(bytes32 taskId, uint256 settlementAmount, address payer) external onlyAuthorized {
+    /// @notice Pull the 2% fee in `token` from the calling escrow and split it 50/50.
+    /// @param taskId The settling task (for event traceability only).
+    /// @param token The ERC-20 the task settled in.
+    /// @param settlementAmount The task reward the fee is computed against.
+    function routeFee(bytes32 taskId, address token, uint256 settlementAmount) external onlyAuthorized {
         uint256 feeAmount = (settlementAmount * FEE_BPS) / BPS_DENOM;
 
-        gDollar.safeTransferFrom(payer, address(this), feeAmount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), feeAmount);
 
         uint256 ubiContribution = (feeAmount * UBI_POOL_PCT) / 100;
         uint256 treasuryContribution = feeAmount - ubiContribution;
 
-        gDollar.safeTransfer(ubiPool, ubiContribution);
-        gDollar.safeTransfer(treasury, treasuryContribution);
+        IERC20(token).safeTransfer(ubiPool, ubiContribution);
+        IERC20(token).safeTransfer(treasury, treasuryContribution);
 
-        emit FeeRouted(taskId, settlementAmount, ubiContribution, treasuryContribution);
+        emit FeeRouted(taskId, token, settlementAmount, ubiContribution, treasuryContribution);
     }
 }

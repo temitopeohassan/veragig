@@ -11,6 +11,16 @@ export function formatGDollar(wei: bigint | string, decimals = 2): string {
   return Number(formatUnits(amount, 18)).toFixed(decimals);
 }
 
+// Format a token base-unit amount using the token's own decimals (USDT = 6, G$/CELO = 18).
+export function formatToken(
+  baseUnits: bigint | string,
+  tokenDecimals: number,
+  displayDecimals = 2
+): string {
+  const amount = typeof baseUnits === "string" ? BigInt(baseUnits) : baseUnits;
+  return Number(formatUnits(amount, tokenDecimals)).toFixed(displayDecimals);
+}
+
 export function perMonthToFlowRate(amountPerMonth: string): bigint {
   return (BigInt(amountPerMonth) * 10n ** 18n) / 2592000n;
 }

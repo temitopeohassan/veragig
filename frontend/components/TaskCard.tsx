@@ -1,7 +1,7 @@
 "use client";
 
-import { formatGDollar, cn } from "@/lib/utils";
-import { Clock, Tag } from "lucide-react";
+import { formatToken, cn } from "@/lib/utils";
+import { Clock, Tag, Users } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
@@ -11,6 +11,9 @@ interface TaskCardProps {
     title: string;
     category: string;
     reward_wei: string;
+    token_symbol?: string;
+    token_decimals?: number;
+    task_type?: string;
     deadline_unix: number;
     client_address: string;
     status: string;
@@ -38,7 +41,7 @@ export function TaskCard({ task }: TaskCardProps) {
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-medium text-gd-text line-clamp-2">{task.title}</h3>
           <span className="text-gd-green font-bold text-lg shrink-0 tabular-nums">
-            {formatGDollar(task.reward_wei)} G$
+            {formatToken(task.reward_wei, task.token_decimals ?? 18)} {task.token_symbol ?? "G$"}
           </span>
         </div>
 
@@ -52,6 +55,13 @@ export function TaskCard({ task }: TaskCardProps) {
             <Tag className="h-3 w-3" />
             {task.category}
           </span>
+
+          {task.task_type === "bounty" && (
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-gd-green/15 text-gd-green">
+              <Users className="h-3 w-3" />
+              Bounty
+            </span>
+          )}
 
           <span
             className={cn(

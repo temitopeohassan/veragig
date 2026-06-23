@@ -8,6 +8,16 @@ const G_DOLLAR_ADDRESSES: Record<string, string> = {
   "celo-sepolia": "0x0000000000000000000000000000000000000000", // placeholder — set G_DOLLAR_ADDRESS in .env
 };
 
+// Extra ERC-20s the escrow accepts for task rewards, per network (verified on-chain).
+//   USDT = native Tether on Celo (6 decimals)
+//   CELO = the CELO native asset's ERC-20 interface (18 decimals)
+const EXTRA_TOKENS: Record<string, Record<string, string>> = {
+  celo: {
+    USDT: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+    CELO: "0x471EcE3750Da237f93B8E339c536989b8978a438",
+  },
+};
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with:", deployer.address);
@@ -59,26 +69,36 @@ async function main() {
     await scoreRegistry.getAddress()
   );
 
-  // 2. VeraGigFeeRouter (UBI pool = deployer for now, update post-deploy)
+  // 2. VeraGigFeeRouter (multi-token; UBI pool = deployer for now, update post-deploy)
   const VeraGigFeeRouter = await ethers.getContractFactory("VeraGigFeeRouter");
-  const feeRouter = await VeraGigFeeRouter.deploy(G_DOLLAR, TREASURY, TREASURY);
+  const feeRouter = await VeraGigFeeRouter.deploy(TREASURY, TREASURY);
   await feeRouter.waitForDeployment();
   console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
 
-  // 3. VeraGigEscrow
+  // 3. VeraGigEscrow (multi-token)
   // Trusted relayer = backend signer operated by the official frontend (https://useveragig.online).
   // Defaults to the deployer; update post-deploy via escrow.setTrustedRelayer(BACKEND_SIGNER).
   const TRUSTED_RELAYER = process.env.RELAYER_ADDRESS || deployer.address;
   console.log("Trusted relayer:", TRUSTED_RELAYER);
   const VeraGigEscrow = await ethers.getContractFactory("VeraGigEscrow");
   const escrow = await VeraGigEscrow.deploy(
-    G_DOLLAR,
     await scoreRegistry.getAddress(),
     await feeRouter.getAddress(),
     TRUSTED_RELAYER
   );
   await escrow.waitForDeployment();
   console.log("VeraGigEscrow:", await escrow.getAddress());
+
+  // Whitelist the reward tokens the escrow accepts (G$ always; USDT/CELO per network).
+  const tokenWhitelist: Record<string, string> = {
+    "G$": G_DOLLAR,
+    ...(EXTRA_TOKENS[network.name] || {}),
+  };
+  for (const [symbol, tokenAddr] of Object.entries(tokenWhitelist)) {
+    if (!tokenAddr || tokenAddr === "0x0000000000000000000000000000000000000000") continue;
+    await escrow.setAllowedToken(tokenAddr, true);
+    console.log(`  whitelisted ${symbol}: ${tokenAddr}`);
+  }
 
   // 4. VeraGigLendingPool
   const VeraGigLendingPool = await ethers.getContractFactory("VeraGigLendingPool");

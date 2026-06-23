@@ -7,59 +7,65 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IVeraScoreRegistry {
-    function updateScore(
-        address worker,
-        uint16 newScore,
-        uint32 tasksCompleted,
-        uint32 tasksAccepted,
-        uint32 disputesLost,
-        uint32 loansRepaidOnTime,
-        uint32 ubiClaimStreakDays,
-        uint32 earningConsistencyWeeks,
-        string calldata trigger
-    ) external;
     function getScore(address worker) external view returns (uint16);
 }
 
 interface IVeraGigFeeRouter {
-    function routeFee(bytes32 taskId, uint256 settlementAmount, address payer) external;
+    function routeFee(bytes32 taskId, address token, uint256 settlementAmount) external;
 }
 
+/// @title VeraGigEscrow (multi-token, gig + bounty)
+/// @notice Holds task rewards in a whitelisted ERC-20 (G$, USDT, CELO, …) and
+///         releases them on settlement. Two task types are supported:
+///         - Gig: assigned to one worker, released to that worker.
+///         - Bounty: open to many submissions; the client selects winners and the
+///           reward is split equally between them.
 contract VeraGigEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    IERC20 public immutable gDollar;
     IVeraScoreRegistry public scoreRegistry;
     IVeraGigFeeRouter public feeRouter;
 
     /// @notice Backend signer operated by the official frontend (https://useveragig.online).
     /// All fund-moving task actions must be submitted by this relayer (or the owner).
-    /// A URL cannot be verified on-chain, so the relayer address is its on-chain proxy.
     address public trustedRelayer;
 
     uint256 public constant FEE_BPS = 200; // 2%
     uint256 public constant BPS_DENOM = 10000;
 
     enum TaskStatus { Open, Assigned, Submitted, Completed, Disputed, Cancelled }
+    enum TaskType { Gig, Bounty }
 
     struct Task {
         bytes32 id;
         address client;
-        address worker;
-        uint256 rewardWei;
+        address worker;       // Gig: assigned worker. Bounty: unused (winners passed at settlement).
+        address token;        // ERC-20 the reward is escrowed in.
+        uint256 rewardWei;    // Reward in `token` base units (excludes the 2% fee).
         uint256 deadline;
         TaskStatus status;
+        TaskType taskType;
         bytes32 deliverableCid;
         uint8 rating;
     }
 
     mapping(bytes32 => Task) public tasks;
     mapping(bytes32 => bytes32) public disputes; // taskId => disputeId
+    mapping(address => bool) public allowedToken;
 
-    event TaskCreated(bytes32 indexed taskId, address indexed client, uint256 rewardWei, uint256 deadline);
+    event TokenAllowed(address indexed token, bool allowed);
+    event TaskCreated(
+        bytes32 indexed taskId,
+        address indexed client,
+        address indexed token,
+        uint256 rewardWei,
+        uint256 deadline,
+        TaskType taskType
+    );
     event TaskAssigned(bytes32 indexed taskId, address indexed worker);
     event TaskSubmitted(bytes32 indexed taskId, address indexed worker, bytes32 deliverableCid);
     event TaskCompleted(bytes32 indexed taskId, address indexed worker, uint8 rating);
+    event BountySettled(bytes32 indexed taskId, address[] winners, uint256 sharePerWinner);
     event TaskCancelled(bytes32 indexed taskId);
     event DisputeRaised(bytes32 indexed taskId, address indexed raiser, bytes32 disputeId);
     event DisputeResolved(bytes32 indexed taskId, address indexed winner);
@@ -73,12 +79,10 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
     }
 
     constructor(
-        address _gDollar,
         address _scoreRegistry,
         address _feeRouter,
         address _trustedRelayer
     ) Ownable(msg.sender) {
-        gDollar = IERC20(_gDollar);
         scoreRegistry = IVeraScoreRegistry(_scoreRegistry);
         feeRouter = IVeraGigFeeRouter(_feeRouter);
         trustedRelayer = _trustedRelayer;
@@ -92,15 +96,25 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         trustedRelayer = newRelayer;
     }
 
+    /// @notice Whitelist (or remove) an ERC-20 that tasks may be funded in.
+    function setAllowedToken(address token, bool allowed) external onlyOwner {
+        require(token != address(0), "Zero token");
+        allowedToken[token] = allowed;
+        emit TokenAllowed(token, allowed);
+    }
+
     /// @notice Create and fund a task on behalf of `client`. Relayer/owner only.
-    /// @dev `client` must have approved this contract for `rewardWei + fee` of G$.
+    /// @dev `client` must have approved this contract for `rewardWei + fee` of `token`.
     function createTask(
         bytes32 taskId,
         address client,
+        address token,
         uint256 rewardWei,
-        uint256 deadline
+        uint256 deadline,
+        TaskType taskType
     ) external onlyRelayerOrOwner nonReentrant {
         require(client != address(0), "Zero client");
+        require(allowedToken[token], "Token not allowed");
         require(tasks[taskId].client == address(0), "Task exists");
         require(deadline > block.timestamp, "Deadline in past");
         require(rewardWei > 0, "Reward required");
@@ -108,25 +122,32 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         uint256 fee = (rewardWei * FEE_BPS) / BPS_DENOM;
         uint256 totalRequired = rewardWei + fee;
 
-        gDollar.safeTransferFrom(client, address(this), totalRequired);
+        IERC20(token).safeTransferFrom(client, address(this), totalRequired);
 
         tasks[taskId] = Task({
             id: taskId,
             client: client,
             worker: address(0),
+            token: token,
             rewardWei: rewardWei,
             deadline: deadline,
             status: TaskStatus.Open,
+            taskType: taskType,
             deliverableCid: bytes32(0),
             rating: 0
         });
 
-        emit TaskCreated(taskId, client, rewardWei, deadline);
+        emit TaskCreated(taskId, client, token, rewardWei, deadline, taskType);
     }
+
+    // ----------------------------------------------------------------------
+    // Gig flow: assign one worker, who submits, then the client approves.
+    // ----------------------------------------------------------------------
 
     function assignTask(bytes32 taskId, address worker) external {
         Task storage task = tasks[taskId];
         require(task.client == msg.sender, "Not client");
+        require(task.taskType == TaskType.Gig, "Not a gig");
         require(task.status == TaskStatus.Open, "Not open");
         task.worker = worker;
         task.status = TaskStatus.Assigned;
@@ -142,30 +163,67 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         emit TaskSubmitted(taskId, msg.sender, deliverableCid);
     }
 
-    /// @notice Approve a submitted task and release the reward to the worker. Relayer/owner only.
+    /// @notice Approve a submitted gig and release the reward to the worker. Relayer/owner only.
     /// @param client The task's client, on whose behalf the relayer acts (must match stored client).
     function approveAndRelease(bytes32 taskId, address client, uint8 rating) external onlyRelayerOrOwner nonReentrant {
         Task storage task = tasks[taskId];
         require(task.client == client, "Not client");
+        require(task.taskType == TaskType.Gig, "Not a gig");
         require(task.status == TaskStatus.Submitted, "Not submitted");
         require(rating >= 1 && rating <= 5, "Rating 1-5");
 
         task.rating = rating;
         task.status = TaskStatus.Completed;
 
-        uint256 fee = (task.rewardWei * FEE_BPS) / BPS_DENOM;
-
-        // Route platform fee
-        gDollar.forceApprove(address(feeRouter), fee);
-        feeRouter.routeFee(taskId, task.rewardWei, task.client);
-
-        // Release reward to worker as a lump sum.
-        gDollar.safeTransfer(task.worker, task.rewardWei);
+        _routeFee(taskId, task.token, task.rewardWei);
+        IERC20(task.token).safeTransfer(task.worker, task.rewardWei);
 
         emit TaskCompleted(taskId, task.worker, rating);
     }
 
-    /// @notice Cancel an open task and refund the client. Relayer/owner only.
+    // ----------------------------------------------------------------------
+    // Bounty flow: many off-chain submissions; client selects winners and the
+    // reward is split equally between them.
+    // ----------------------------------------------------------------------
+
+    /// @notice Settle a bounty by splitting the reward equally among `winners`. Relayer/owner only.
+    /// @dev Submissions are tracked off-chain; the relayer passes the selected winner
+    ///      addresses here. Integer-division remainder goes to the first winner so the
+    ///      full reward is always distributed. Winners must be de-duplicated by the caller.
+    function approveBountyWinners(
+        bytes32 taskId,
+        address client,
+        address[] calldata winners,
+        uint8 rating
+    ) external onlyRelayerOrOwner nonReentrant {
+        Task storage task = tasks[taskId];
+        require(task.client == client, "Not client");
+        require(task.taskType == TaskType.Bounty, "Not a bounty");
+        require(task.status == TaskStatus.Open, "Not open");
+        require(winners.length > 0, "No winners");
+        require(rating >= 1 && rating <= 5, "Rating 1-5");
+
+        task.rating = rating;
+        task.status = TaskStatus.Completed;
+
+        address token = task.token;
+        uint256 reward = task.rewardWei;
+
+        _routeFee(taskId, token, reward);
+
+        uint256 share = reward / winners.length;
+        uint256 remainder = reward - (share * winners.length);
+
+        for (uint256 i = 0; i < winners.length; i++) {
+            require(winners[i] != address(0), "Zero winner");
+            uint256 amount = i == 0 ? share + remainder : share;
+            IERC20(token).safeTransfer(winners[i], amount);
+        }
+
+        emit BountySettled(taskId, winners, share);
+    }
+
+    /// @notice Cancel an open task and refund the client (reward + fee). Relayer/owner only.
     /// @param client The task's client, on whose behalf the relayer acts (must match stored client).
     function cancelTask(bytes32 taskId, address client) external onlyRelayerOrOwner nonReentrant {
         Task storage task = tasks[taskId];
@@ -174,7 +232,7 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
 
         task.status = TaskStatus.Cancelled;
         uint256 fee = (task.rewardWei * FEE_BPS) / BPS_DENOM;
-        gDollar.safeTransfer(task.client, task.rewardWei + fee);
+        IERC20(task.token).safeTransfer(task.client, task.rewardWei + fee);
 
         emit TaskCancelled(taskId);
     }
@@ -202,13 +260,17 @@ contract VeraGigEscrow is Ownable, ReentrancyGuard {
         require(task.status == TaskStatus.Disputed, "Not disputed");
 
         task.status = TaskStatus.Completed;
-        uint256 fee = (task.rewardWei * FEE_BPS) / BPS_DENOM;
-
-        gDollar.forceApprove(address(feeRouter), fee);
-        feeRouter.routeFee(taskId, task.rewardWei, task.client);
-        gDollar.safeTransfer(winner, task.rewardWei);
+        _routeFee(taskId, task.token, task.rewardWei);
+        IERC20(task.token).safeTransfer(winner, task.rewardWei);
 
         emit DisputeResolved(taskId, winner);
+    }
+
+    /// @dev Approve the fee router for the 2% fee held by this contract and route it.
+    function _routeFee(bytes32 taskId, address token, uint256 settlementAmount) internal {
+        uint256 fee = (settlementAmount * FEE_BPS) / BPS_DENOM;
+        IERC20(token).forceApprove(address(feeRouter), fee);
+        feeRouter.routeFee(taskId, token, settlementAmount);
     }
 
     function getTask(bytes32 taskId) external view returns (Task memory) {
