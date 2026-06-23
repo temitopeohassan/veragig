@@ -3,11 +3,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_gDollar",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_ubiPool",
         "type": "address"
       },
@@ -61,6 +56,12 @@
         "internalType": "bytes32",
         "name": "taskId",
         "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -176,19 +177,6 @@
   },
   {
     "inputs": [],
-    "name": "gDollar",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -215,14 +203,14 @@
         "type": "bytes32"
       },
       {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "settlementAmount",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "payer",
-        "type": "address"
       }
     ],
     "name": "routeFee",
