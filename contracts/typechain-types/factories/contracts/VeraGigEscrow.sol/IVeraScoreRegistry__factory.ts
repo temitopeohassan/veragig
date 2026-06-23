@@ -28,59 +28,6 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "worker",
-        type: "address",
-      },
-      {
-        internalType: "uint16",
-        name: "newScore",
-        type: "uint16",
-      },
-      {
-        internalType: "uint32",
-        name: "tasksCompleted",
-        type: "uint32",
-      },
-      {
-        internalType: "uint32",
-        name: "tasksAccepted",
-        type: "uint32",
-      },
-      {
-        internalType: "uint32",
-        name: "disputesLost",
-        type: "uint32",
-      },
-      {
-        internalType: "uint32",
-        name: "loansRepaidOnTime",
-        type: "uint32",
-      },
-      {
-        internalType: "uint32",
-        name: "ubiClaimStreakDays",
-        type: "uint32",
-      },
-      {
-        internalType: "uint32",
-        name: "earningConsistencyWeeks",
-        type: "uint32",
-      },
-      {
-        internalType: "string",
-        name: "trigger",
-        type: "string",
-      },
-    ],
-    name: "updateScore",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
 ] as const;
 
 export class IVeraScoreRegistry__factory {

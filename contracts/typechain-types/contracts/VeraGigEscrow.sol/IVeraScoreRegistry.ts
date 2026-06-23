@@ -3,7 +3,6 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
@@ -22,32 +21,14 @@ import type {
 } from "../../common";
 
 export interface IVeraScoreRegistryInterface extends Interface {
-  getFunction(nameOrSignature: "getScore" | "updateScore"): FunctionFragment;
+  getFunction(nameOrSignature: "getScore"): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "getScore",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "updateScore",
-    values: [
-      AddressLike,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      string
-    ]
-  ): string;
 
   decodeFunctionResult(functionFragment: "getScore", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "updateScore",
-    data: BytesLike
-  ): Result;
 }
 
 export interface IVeraScoreRegistry extends BaseContract {
@@ -95,22 +76,6 @@ export interface IVeraScoreRegistry extends BaseContract {
 
   getScore: TypedContractMethod<[worker: AddressLike], [bigint], "view">;
 
-  updateScore: TypedContractMethod<
-    [
-      worker: AddressLike,
-      newScore: BigNumberish,
-      tasksCompleted: BigNumberish,
-      tasksAccepted: BigNumberish,
-      disputesLost: BigNumberish,
-      loansRepaidOnTime: BigNumberish,
-      ubiClaimStreakDays: BigNumberish,
-      earningConsistencyWeeks: BigNumberish,
-      trigger: string
-    ],
-    [void],
-    "nonpayable"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -118,23 +83,6 @@ export interface IVeraScoreRegistry extends BaseContract {
   getFunction(
     nameOrSignature: "getScore"
   ): TypedContractMethod<[worker: AddressLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "updateScore"
-  ): TypedContractMethod<
-    [
-      worker: AddressLike,
-      newScore: BigNumberish,
-      tasksCompleted: BigNumberish,
-      tasksAccepted: BigNumberish,
-      disputesLost: BigNumberish,
-      loansRepaidOnTime: BigNumberish,
-      ubiClaimStreakDays: BigNumberish,
-      earningConsistencyWeeks: BigNumberish,
-      trigger: string
-    ],
-    [void],
-    "nonpayable"
-  >;
 
   filters: {};
 }

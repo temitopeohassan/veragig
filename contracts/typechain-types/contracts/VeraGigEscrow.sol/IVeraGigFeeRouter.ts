@@ -26,7 +26,7 @@ export interface IVeraGigFeeRouterInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "routeFee",
-    values: [BytesLike, BigNumberish, AddressLike]
+    values: [BytesLike, AddressLike, BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "routeFee", data: BytesLike): Result;
@@ -76,7 +76,7 @@ export interface IVeraGigFeeRouter extends BaseContract {
   ): Promise<this>;
 
   routeFee: TypedContractMethod<
-    [taskId: BytesLike, settlementAmount: BigNumberish, payer: AddressLike],
+    [taskId: BytesLike, token: AddressLike, settlementAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -88,7 +88,7 @@ export interface IVeraGigFeeRouter extends BaseContract {
   getFunction(
     nameOrSignature: "routeFee"
   ): TypedContractMethod<
-    [taskId: BytesLike, settlementAmount: BigNumberish, payer: AddressLike],
+    [taskId: BytesLike, token: AddressLike, settlementAmount: BigNumberish],
     [void],
     "nonpayable"
   >;

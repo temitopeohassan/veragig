@@ -608,8 +608,8 @@
       ]
     },
     "C:\\Users\\IMAGIC STUDIO\\Desktop\\vps\\veragig\\contracts\\contracts\\VeraGigEscrow.sol": {
-      "lastModificationDate": 1781802993938,
-      "contentHash": "a2eb4c31a67141d06b6dbb7c707e4867",
+      "lastModificationDate": 1782232943803,
+      "contentHash": "73ea7bbc48c4aaf113b32158a6d6aa83",
       "sourceName": "contracts/VeraGigEscrow.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -651,8 +651,8 @@
       ]
     },
     "C:\\Users\\IMAGIC STUDIO\\Desktop\\vps\\veragig\\contracts\\contracts\\VeraGigFeeRouter.sol": {
-      "lastModificationDate": 1781097712749,
-      "contentHash": "201014731ebabe124a5683affc484a83",
+      "lastModificationDate": 1782232943803,
+      "contentHash": "e854f5aae036aa1243f7ba57a473c5a9",
       "sourceName": "contracts/VeraGigFeeRouter.sol",
       "solcConfig": {
         "version": "0.8.24",

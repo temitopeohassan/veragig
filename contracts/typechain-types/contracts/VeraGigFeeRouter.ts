@@ -31,7 +31,6 @@ export interface VeraGigFeeRouterInterface extends Interface {
       | "TREASURY_PCT"
       | "UBI_POOL_PCT"
       | "authorizedCallers"
-      | "gDollar"
       | "owner"
       | "renounceOwnership"
       | "routeFee"
@@ -60,7 +59,6 @@ export interface VeraGigFeeRouterInterface extends Interface {
     functionFragment: "authorizedCallers",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "gDollar", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -68,7 +66,7 @@ export interface VeraGigFeeRouterInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "routeFee",
-    values: [BytesLike, BigNumberish, AddressLike]
+    values: [BytesLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setAddresses",
@@ -99,7 +97,6 @@ export interface VeraGigFeeRouterInterface extends Interface {
     functionFragment: "authorizedCallers",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "gDollar", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -125,18 +122,21 @@ export interface VeraGigFeeRouterInterface extends Interface {
 export namespace FeeRoutedEvent {
   export type InputTuple = [
     taskId: BytesLike,
+    token: AddressLike,
     settlementAmount: BigNumberish,
     ubiContribution: BigNumberish,
     treasuryContribution: BigNumberish
   ];
   export type OutputTuple = [
     taskId: string,
+    token: string,
     settlementAmount: bigint,
     ubiContribution: bigint,
     treasuryContribution: bigint
   ];
   export interface OutputObject {
     taskId: string;
+    token: string;
     settlementAmount: bigint;
     ubiContribution: bigint;
     treasuryContribution: bigint;
@@ -217,14 +217,12 @@ export interface VeraGigFeeRouter extends BaseContract {
     "view"
   >;
 
-  gDollar: TypedContractMethod<[], [string], "view">;
-
   owner: TypedContractMethod<[], [string], "view">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   routeFee: TypedContractMethod<
-    [taskId: BytesLike, settlementAmount: BigNumberish, payer: AddressLike],
+    [taskId: BytesLike, token: AddressLike, settlementAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -271,9 +269,6 @@ export interface VeraGigFeeRouter extends BaseContract {
     nameOrSignature: "authorizedCallers"
   ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
   getFunction(
-    nameOrSignature: "gDollar"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -282,7 +277,7 @@ export interface VeraGigFeeRouter extends BaseContract {
   getFunction(
     nameOrSignature: "routeFee"
   ): TypedContractMethod<
-    [taskId: BytesLike, settlementAmount: BigNumberish, payer: AddressLike],
+    [taskId: BytesLike, token: AddressLike, settlementAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -326,7 +321,7 @@ export interface VeraGigFeeRouter extends BaseContract {
   >;
 
   filters: {
-    "FeeRouted(bytes32,uint256,uint256,uint256)": TypedContractEvent<
+    "FeeRouted(bytes32,address,uint256,uint256,uint256)": TypedContractEvent<
       FeeRoutedEvent.InputTuple,
       FeeRoutedEvent.OutputTuple,
       FeeRoutedEvent.OutputObject

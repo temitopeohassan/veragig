@@ -17,14 +17,14 @@ const _abi = [
         type: "bytes32",
       },
       {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
         internalType: "uint256",
         name: "settlementAmount",
         type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "payer",
-        type: "address",
       },
     ],
     name: "routeFee",

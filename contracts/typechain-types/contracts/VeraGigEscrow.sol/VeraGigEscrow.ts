@@ -28,9 +28,11 @@ export declare namespace VeraGigEscrow {
     id: BytesLike;
     client: AddressLike;
     worker: AddressLike;
+    token: AddressLike;
     rewardWei: BigNumberish;
     deadline: BigNumberish;
     status: BigNumberish;
+    taskType: BigNumberish;
     deliverableCid: BytesLike;
     rating: BigNumberish;
   };
@@ -39,18 +41,22 @@ export declare namespace VeraGigEscrow {
     id: string,
     client: string,
     worker: string,
+    token: string,
     rewardWei: bigint,
     deadline: bigint,
     status: bigint,
+    taskType: bigint,
     deliverableCid: string,
     rating: bigint
   ] & {
     id: string;
     client: string;
     worker: string;
+    token: string;
     rewardWei: bigint;
     deadline: bigint;
     status: bigint;
+    taskType: bigint;
     deliverableCid: string;
     rating: bigint;
   };
@@ -61,20 +67,22 @@ export interface VeraGigEscrowInterface extends Interface {
     nameOrSignature:
       | "BPS_DENOM"
       | "FEE_BPS"
+      | "allowedToken"
       | "approveAndRelease"
+      | "approveBountyWinners"
       | "assignTask"
       | "cancelTask"
       | "createTask"
       | "disputes"
       | "emergencyWithdraw"
       | "feeRouter"
-      | "gDollar"
       | "getTask"
       | "owner"
       | "raiseDispute"
       | "renounceOwnership"
       | "resolveDispute"
       | "scoreRegistry"
+      | "setAllowedToken"
       | "setTrustedRelayer"
       | "submitDeliverable"
       | "tasks"
@@ -85,6 +93,7 @@ export interface VeraGigEscrowInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "BountySettled"
       | "DisputeRaised"
       | "DisputeResolved"
       | "EmergencyWithdraw"
@@ -94,14 +103,23 @@ export interface VeraGigEscrowInterface extends Interface {
       | "TaskCompleted"
       | "TaskCreated"
       | "TaskSubmitted"
+      | "TokenAllowed"
       | "TrustedRelayerUpdated"
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "BPS_DENOM", values?: undefined): string;
   encodeFunctionData(functionFragment: "FEE_BPS", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "allowedToken",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "approveAndRelease",
     values: [BytesLike, AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "approveBountyWinners",
+    values: [BytesLike, AddressLike, AddressLike[], BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "assignTask",
@@ -113,7 +131,14 @@ export interface VeraGigEscrowInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createTask",
-    values: [BytesLike, AddressLike, BigNumberish, BigNumberish]
+    values: [
+      BytesLike,
+      AddressLike,
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
   ): string;
   encodeFunctionData(functionFragment: "disputes", values: [BytesLike]): string;
   encodeFunctionData(
@@ -121,7 +146,6 @@ export interface VeraGigEscrowInterface extends Interface {
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "feeRouter", values?: undefined): string;
-  encodeFunctionData(functionFragment: "gDollar", values?: undefined): string;
   encodeFunctionData(functionFragment: "getTask", values: [BytesLike]): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -139,6 +163,10 @@ export interface VeraGigEscrowInterface extends Interface {
   encodeFunctionData(
     functionFragment: "scoreRegistry",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setAllowedToken",
+    values: [AddressLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setTrustedRelayer",
@@ -165,7 +193,15 @@ export interface VeraGigEscrowInterface extends Interface {
   decodeFunctionResult(functionFragment: "BPS_DENOM", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "FEE_BPS", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "allowedToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "approveAndRelease",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "approveBountyWinners",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "assignTask", data: BytesLike): Result;
@@ -177,7 +213,6 @@ export interface VeraGigEscrowInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "feeRouter", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "gDollar", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getTask", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
@@ -194,6 +229,10 @@ export interface VeraGigEscrowInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "scoreRegistry",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setAllowedToken",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -217,6 +256,28 @@ export interface VeraGigEscrowInterface extends Interface {
     functionFragment: "updateContracts",
     data: BytesLike
   ): Result;
+}
+
+export namespace BountySettledEvent {
+  export type InputTuple = [
+    taskId: BytesLike,
+    winners: AddressLike[],
+    sharePerWinner: BigNumberish
+  ];
+  export type OutputTuple = [
+    taskId: string,
+    winners: string[],
+    sharePerWinner: bigint
+  ];
+  export interface OutputObject {
+    taskId: string;
+    winners: string[];
+    sharePerWinner: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace DisputeRaisedEvent {
@@ -328,20 +389,26 @@ export namespace TaskCreatedEvent {
   export type InputTuple = [
     taskId: BytesLike,
     client: AddressLike,
+    token: AddressLike,
     rewardWei: BigNumberish,
-    deadline: BigNumberish
+    deadline: BigNumberish,
+    taskType: BigNumberish
   ];
   export type OutputTuple = [
     taskId: string,
     client: string,
+    token: string,
     rewardWei: bigint,
-    deadline: bigint
+    deadline: bigint,
+    taskType: bigint
   ];
   export interface OutputObject {
     taskId: string;
     client: string;
+    token: string;
     rewardWei: bigint;
     deadline: bigint;
+    taskType: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -364,6 +431,19 @@ export namespace TaskSubmittedEvent {
     taskId: string;
     worker: string;
     deliverableCid: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenAllowedEvent {
+  export type InputTuple = [token: AddressLike, allowed: boolean];
+  export type OutputTuple = [token: string, allowed: boolean];
+  export interface OutputObject {
+    token: string;
+    allowed: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -431,8 +511,21 @@ export interface VeraGigEscrow extends BaseContract {
 
   FEE_BPS: TypedContractMethod<[], [bigint], "view">;
 
+  allowedToken: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+
   approveAndRelease: TypedContractMethod<
     [taskId: BytesLike, client: AddressLike, rating: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  approveBountyWinners: TypedContractMethod<
+    [
+      taskId: BytesLike,
+      client: AddressLike,
+      winners: AddressLike[],
+      rating: BigNumberish
+    ],
     [void],
     "nonpayable"
   >;
@@ -453,8 +546,10 @@ export interface VeraGigEscrow extends BaseContract {
     [
       taskId: BytesLike,
       client: AddressLike,
+      token: AddressLike,
       rewardWei: BigNumberish,
-      deadline: BigNumberish
+      deadline: BigNumberish,
+      taskType: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -469,8 +564,6 @@ export interface VeraGigEscrow extends BaseContract {
   >;
 
   feeRouter: TypedContractMethod<[], [string], "view">;
-
-  gDollar: TypedContractMethod<[], [string], "view">;
 
   getTask: TypedContractMethod<
     [taskId: BytesLike],
@@ -496,6 +589,12 @@ export interface VeraGigEscrow extends BaseContract {
 
   scoreRegistry: TypedContractMethod<[], [string], "view">;
 
+  setAllowedToken: TypedContractMethod<
+    [token: AddressLike, allowed: boolean],
+    [void],
+    "nonpayable"
+  >;
+
   setTrustedRelayer: TypedContractMethod<
     [newRelayer: AddressLike],
     [void],
@@ -511,13 +610,26 @@ export interface VeraGigEscrow extends BaseContract {
   tasks: TypedContractMethod<
     [arg0: BytesLike],
     [
-      [string, string, string, bigint, bigint, bigint, string, bigint] & {
+      [
+        string,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        bigint
+      ] & {
         id: string;
         client: string;
         worker: string;
+        token: string;
         rewardWei: bigint;
         deadline: bigint;
         status: bigint;
+        taskType: bigint;
         deliverableCid: string;
         rating: bigint;
       }
@@ -550,9 +662,24 @@ export interface VeraGigEscrow extends BaseContract {
     nameOrSignature: "FEE_BPS"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "allowedToken"
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "approveAndRelease"
   ): TypedContractMethod<
     [taskId: BytesLike, client: AddressLike, rating: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "approveBountyWinners"
+  ): TypedContractMethod<
+    [
+      taskId: BytesLike,
+      client: AddressLike,
+      winners: AddressLike[],
+      rating: BigNumberish
+    ],
     [void],
     "nonpayable"
   >;
@@ -576,8 +703,10 @@ export interface VeraGigEscrow extends BaseContract {
     [
       taskId: BytesLike,
       client: AddressLike,
+      token: AddressLike,
       rewardWei: BigNumberish,
-      deadline: BigNumberish
+      deadline: BigNumberish,
+      taskType: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -594,9 +723,6 @@ export interface VeraGigEscrow extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "feeRouter"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "gDollar"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "getTask"
@@ -629,6 +755,13 @@ export interface VeraGigEscrow extends BaseContract {
     nameOrSignature: "scoreRegistry"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "setAllowedToken"
+  ): TypedContractMethod<
+    [token: AddressLike, allowed: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "setTrustedRelayer"
   ): TypedContractMethod<[newRelayer: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -643,13 +776,26 @@ export interface VeraGigEscrow extends BaseContract {
   ): TypedContractMethod<
     [arg0: BytesLike],
     [
-      [string, string, string, bigint, bigint, bigint, string, bigint] & {
+      [
+        string,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        bigint
+      ] & {
         id: string;
         client: string;
         worker: string;
+        token: string;
         rewardWei: bigint;
         deadline: bigint;
         status: bigint;
+        taskType: bigint;
         deliverableCid: string;
         rating: bigint;
       }
@@ -670,6 +816,13 @@ export interface VeraGigEscrow extends BaseContract {
     "nonpayable"
   >;
 
+  getEvent(
+    key: "BountySettled"
+  ): TypedContractEvent<
+    BountySettledEvent.InputTuple,
+    BountySettledEvent.OutputTuple,
+    BountySettledEvent.OutputObject
+  >;
   getEvent(
     key: "DisputeRaised"
   ): TypedContractEvent<
@@ -734,6 +887,13 @@ export interface VeraGigEscrow extends BaseContract {
     TaskSubmittedEvent.OutputObject
   >;
   getEvent(
+    key: "TokenAllowed"
+  ): TypedContractEvent<
+    TokenAllowedEvent.InputTuple,
+    TokenAllowedEvent.OutputTuple,
+    TokenAllowedEvent.OutputObject
+  >;
+  getEvent(
     key: "TrustedRelayerUpdated"
   ): TypedContractEvent<
     TrustedRelayerUpdatedEvent.InputTuple,
@@ -742,6 +902,17 @@ export interface VeraGigEscrow extends BaseContract {
   >;
 
   filters: {
+    "BountySettled(bytes32,address[],uint256)": TypedContractEvent<
+      BountySettledEvent.InputTuple,
+      BountySettledEvent.OutputTuple,
+      BountySettledEvent.OutputObject
+    >;
+    BountySettled: TypedContractEvent<
+      BountySettledEvent.InputTuple,
+      BountySettledEvent.OutputTuple,
+      BountySettledEvent.OutputObject
+    >;
+
     "DisputeRaised(bytes32,address,bytes32)": TypedContractEvent<
       DisputeRaisedEvent.InputTuple,
       DisputeRaisedEvent.OutputTuple,
@@ -819,7 +990,7 @@ export interface VeraGigEscrow extends BaseContract {
       TaskCompletedEvent.OutputObject
     >;
 
-    "TaskCreated(bytes32,address,uint256,uint256)": TypedContractEvent<
+    "TaskCreated(bytes32,address,address,uint256,uint256,uint8)": TypedContractEvent<
       TaskCreatedEvent.InputTuple,
       TaskCreatedEvent.OutputTuple,
       TaskCreatedEvent.OutputObject
@@ -839,6 +1010,17 @@ export interface VeraGigEscrow extends BaseContract {
       TaskSubmittedEvent.InputTuple,
       TaskSubmittedEvent.OutputTuple,
       TaskSubmittedEvent.OutputObject
+    >;
+
+    "TokenAllowed(address,bool)": TypedContractEvent<
+      TokenAllowedEvent.InputTuple,
+      TokenAllowedEvent.OutputTuple,
+      TokenAllowedEvent.OutputObject
+    >;
+    TokenAllowed: TypedContractEvent<
+      TokenAllowedEvent.InputTuple,
+      TokenAllowedEvent.OutputTuple,
+      TokenAllowedEvent.OutputObject
     >;
 
     "TrustedRelayerUpdated(address,address)": TypedContractEvent<
