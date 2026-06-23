@@ -8,13 +8,13 @@ export const CONTRACTS = {
   IDENTITY: (process.env.NEXT_PUBLIC_IDENTITY_CONTRACT ??
     "0xC361A6E67822a0EDc17D899227dd9FC50BD62F42") as `0x${string}`,
   ESCROW: (process.env.NEXT_PUBLIC_ESCROW_CONTRACT ??
-    "0xDa4F6EE5f77883a901F1509b8B3548b95BAfCE5f") as `0x${string}`,
+    "0x215af329A2142361730eed1aA83aed656Ed2F194") as `0x${string}`,
   SCORE_REGISTRY: (process.env.NEXT_PUBLIC_SCORE_REGISTRY ??
     "0xac9861Bf37588Bc17D5B60Bf1EB47C664a572510") as `0x${string}`,
   LENDING_POOL: (process.env.NEXT_PUBLIC_LENDING_POOL ??
     "0x52E0220fe011923f28440C851ae0efD6B3d63f06") as `0x${string}`,
   FEE_ROUTER: (process.env.NEXT_PUBLIC_FEE_ROUTER ??
-    "0xE27c10d0a730b0E4B54EF199f54Bc2f7feC1A7B6") as `0x${string}`,
+    "0x8CF2B033dE82c861DD0Fb60F25031C5D9c328Bb2") as `0x${string}`,
 };
 
 // Reward tokens the escrow accepts. Addresses + decimals verified on Celo mainnet.

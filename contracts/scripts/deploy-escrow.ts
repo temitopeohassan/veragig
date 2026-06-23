@@ -42,11 +42,17 @@ async function main() {
   if (process.env.USDT_ADDRESS) tokens.USDT = process.env.USDT_ADDRESS;
   if (process.env.CELO_ADDRESS) tokens.CELO = process.env.CELO_ADDRESS;
 
-  // 1. Fee router (multi-token).
+  // 1. Fee router (multi-token). Reuse an already-deployed one (resume a partial
+  //    deploy) by setting FEE_ROUTER in .env, otherwise deploy a fresh router.
   const VeraGigFeeRouter = await ethers.getContractFactory("VeraGigFeeRouter");
-  const feeRouter = await VeraGigFeeRouter.deploy(TREASURY, TREASURY);
+  const feeRouter = process.env.FEE_ROUTER
+    ? VeraGigFeeRouter.attach(process.env.FEE_ROUTER)
+    : await VeraGigFeeRouter.deploy(TREASURY, TREASURY);
   await feeRouter.waitForDeployment();
-  console.log("VeraGigFeeRouter:", await feeRouter.getAddress());
+  console.log(
+    process.env.FEE_ROUTER ? "VeraGigFeeRouter (reused):" : "VeraGigFeeRouter:",
+    await feeRouter.getAddress()
+  );
 
   // 2. Escrow (multi-token, gig + bounty).
   const VeraGigEscrow = await ethers.getContractFactory("VeraGigEscrow");
