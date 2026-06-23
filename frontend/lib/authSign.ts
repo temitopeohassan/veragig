@@ -11,6 +11,7 @@ export type AuthAction =
   | "create-task"
   | "approve-task"
   | "cancel-task"
+  | "select-winners"
   | "create-profile"
   | "update-profile";
 

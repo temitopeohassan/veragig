@@ -17,6 +17,37 @@ export const CONTRACTS = {
     "0xE27c10d0a730b0E4B54EF199f54Bc2f7feC1A7B6") as `0x${string}`,
 };
 
+// Reward tokens the escrow accepts. Addresses + decimals verified on Celo mainnet.
+// USDT is native Tether (6 decimals); CELO is the native asset's ERC-20 interface.
+// MUST mirror node-backend/app/config.js `rewardTokens`.
+export interface TokenInfo {
+  symbol: string;
+  address: `0x${string}`;
+  decimals: number;
+}
+
+export const TOKENS: Record<string, TokenInfo> = {
+  "G$": { symbol: "G$", address: CONTRACTS.G_DOLLAR, decimals: 18 },
+  USDT: {
+    symbol: "USDT",
+    address: (process.env.NEXT_PUBLIC_USDT_ADDRESS ??
+      "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e") as `0x${string}`,
+    decimals: 6,
+  },
+  CELO: {
+    symbol: "CELO",
+    address: (process.env.NEXT_PUBLIC_CELO_ADDRESS ??
+      "0x471EcE3750Da237f93B8E339c536989b8978a438") as `0x${string}`,
+    decimals: 18,
+  },
+};
+
+export const TOKEN_LIST: TokenInfo[] = Object.values(TOKENS);
+
+export function getToken(symbol?: string): TokenInfo {
+  return (symbol && TOKENS[symbol]) || TOKENS["G$"];
+}
+
 export const VERAGIG_ENV =
   (process.env.NEXT_PUBLIC_VERAGIG_ENV as "production" | "staging" | "development") ??
   "production";

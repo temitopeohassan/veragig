@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { useCreateTask } from "@/hooks/useTasks";
+import { useCreateTask, type TaskType } from "@/hooks/useTasks";
 import { useIdentityStatus } from "@/hooks/useIdentity";
 import { IdentityVerificationPrompt } from "@/components/IdentityVerification";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { TOKEN_LIST } from "@/lib/contracts";
 
 const CATEGORIES = ["design", "development", "writing", "marketing", "data", "video", "audio", "other"];
 
@@ -20,7 +21,9 @@ export default function PostTaskPage() {
     title: "",
     description: "",
     category: "development",
-    rewardGDollar: "",
+    rewardAmount: "",
+    tokenSymbol: "G$",
+    taskType: "gig" as TaskType,
     deadlineDays: "7",
     releaseAsStream: true,
     payoutDurationDays: "7",
@@ -44,7 +47,9 @@ export default function PostTaskPage() {
       title: form.title,
       description: form.description,
       category: form.category,
-      rewardGDollar: form.rewardGDollar,
+      rewardAmount: form.rewardAmount,
+      tokenSymbol: form.tokenSymbol,
+      taskType: form.taskType,
       deadlineUnix,
       releaseAsStream: form.releaseAsStream,
       payoutDurationDays: parseInt(form.payoutDurationDays),
@@ -96,6 +101,31 @@ export default function PostTaskPage() {
             />
           </div>
 
+          {/* Task type: single-assignee gig vs open multi-winner bounty */}
+          <div>
+            <label className="text-sm font-medium text-gd-muted">Task type</label>
+            <div className="mt-1 grid grid-cols-2 gap-3">
+              {([
+                { value: "gig", title: "Gig", desc: "Assign one worker; reward goes to them." },
+                { value: "bounty", title: "Bounty", desc: "Many can submit; pick winners, reward splits equally." },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, taskType: opt.value })}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    form.taskType === opt.value
+                      ? "border-gd-green bg-gd-green/10"
+                      : "border-gd-border bg-gd-dark hover:border-gd-green/50"
+                  }`}
+                >
+                  <div className="text-sm font-medium text-gd-text">{opt.title}</div>
+                  <div className="text-xs text-gd-muted mt-0.5">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gd-muted">Category</label>
@@ -111,17 +141,28 @@ export default function PostTaskPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gd-muted">Reward (G$)</label>
-              <input
-                required
-                type="number"
-                min="1"
-                step="0.01"
-                value={form.rewardGDollar}
-                onChange={(e) => setForm({ ...form, rewardGDollar: e.target.value })}
-                placeholder="e.g. 50"
-                className="mt-1 w-full rounded-lg bg-gd-dark border border-gd-border px-3 py-2 text-sm text-gd-text placeholder:text-gd-muted focus:outline-none focus:border-gd-green"
-              />
+              <label className="text-sm font-medium text-gd-muted">Reward</label>
+              <div className="mt-1 flex gap-2">
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={form.rewardAmount}
+                  onChange={(e) => setForm({ ...form, rewardAmount: e.target.value })}
+                  placeholder="e.g. 50"
+                  className="w-full rounded-lg bg-gd-dark border border-gd-border px-3 py-2 text-sm text-gd-text placeholder:text-gd-muted focus:outline-none focus:border-gd-green"
+                />
+                <select
+                  value={form.tokenSymbol}
+                  onChange={(e) => setForm({ ...form, tokenSymbol: e.target.value })}
+                  className="rounded-lg bg-gd-dark border border-gd-border px-2 py-2 text-sm text-gd-text focus:outline-none focus:border-gd-green"
+                >
+                  {TOKEN_LIST.map((t) => (
+                    <option key={t.symbol} value={t.symbol}>{t.symbol}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
