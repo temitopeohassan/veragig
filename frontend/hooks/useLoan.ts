@@ -22,7 +22,12 @@ export function useLoanEligibility() {
         reason_if_ineligible: string | null;
       }>;
     },
-    staleTime: 60_000,
+    // Check once on page load; do not re-poll or refetch on focus/mount/reconnect.
+    // A successful loan request explicitly invalidates this query to refresh it.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 }
 

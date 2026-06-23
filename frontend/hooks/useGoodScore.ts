@@ -27,7 +27,11 @@ export function useGoodScore(workerAddress?: string) {
         last_updated_block: number;
       }>;
     },
-    staleTime: 120_000,
+    // Check once on page load; do not re-poll or refetch on focus/mount/reconnect.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 }
 
