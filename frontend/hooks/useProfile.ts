@@ -53,13 +53,28 @@ export function useCreateProfile() {
       if (!address) throw new Error("Wallet not connected");
 
       // 1. On-chain account record (user signs + pays gas from their own wallet).
-      const txHash = await writeContractAsync({
+      //    Skip if the wallet is already registered on-chain — otherwise
+      //    Account.createAccount() reverts with "Account exists". This happens
+      //    when a prior attempt registered on-chain but the DB write below
+      //    failed/was abandoned, leaving the wallet registered but profile-less.
+      //    Re-running create then must be able to recover instead of dead-ending.
+      let txHash: `0x${string}` | null = null;
+      const alreadyRegistered = (await publicClient?.readContract({
         address: CONTRACTS.ACCOUNT,
         abi: AccountABI,
-        functionName: "createAccount",
-        args: [],
-      });
-      await publicClient?.waitForTransactionReceipt({ hash: txHash });
+        functionName: "exists",
+        args: [address],
+      })) as boolean | undefined;
+
+      if (!alreadyRegistered) {
+        txHash = await writeContractAsync({
+          address: CONTRACTS.ACCOUNT,
+          abi: AccountABI,
+          functionName: "createAccount",
+          args: [],
+        });
+        await publicClient?.waitForTransactionReceipt({ hash: txHash });
+      }
 
       // 2. Prove wallet ownership for the database write.
       const auth = await createAuthPayload(signMessageAsync, {

@@ -35,12 +35,16 @@ export function ProfileGate() {
     }
     if (status === "connected") {
       wasConnected.current = true;
-      if (sawDisconnected.current && profile) {
+      // Send a profiled wallet to the dashboard on login. This covers both a
+      // fresh connect (sawDisconnected) and an auto-reconnect on page load that
+      // lands on the marketing home page (pathname === "/"), where wagmi goes
+      // reconnecting -> connected without ever reporting "disconnected".
+      if (profile && (sawDisconnected.current || pathname === "/")) {
         sawDisconnected.current = false;
         router.push("/dashboard");
       }
     }
-  }, [status, profile, router]);
+  }, [status, profile, pathname, router]);
 
   const needsProfile =
     isConnected && !isLoading && profile === null && pathname !== CREATE_ROUTE;
